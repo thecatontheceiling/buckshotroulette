@@ -111,7 +111,11 @@ func Kill(who : String, trueDeath : bool, returningShotgun : bool):
 
 func MainDeathRoutine():
 	var loadingHeaven = false
-	if(shotgunShooting.roundManager.wireIsCut_player): 
+	if (shotgunShooting.roundManager.endless):
+		await get_tree().create_timer(.5, false).timeout
+		get_tree().change_scene_to_file("res://scenes/death.tscn")
+		return
+	if (shotgunShooting.roundManager.wireIsCut_player): 
 		shotgunShooting.roundManager.playerData.enteringFromTrueDeath = true
 		loadingHeaven = true
 	shotgunShooting.roundManager.playerData.playerEnteringFromDeath = true

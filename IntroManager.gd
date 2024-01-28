@@ -3,6 +3,8 @@ class_name IntroManager extends Node
 @export var cameraParent : Node3D
 @export var intbranch_bathroomdoor : InteractionBranch
 @export var intbranch_backroomdoor: InteractionBranch
+@export var intbranch_pillbottle : InteractionBranch
+@export var parent_pills : Node3D
 @export var cursor : CursorManager
 @export var roundManager : RoundManager
 @export var speaker_amb_restroom : AudioStreamPlayer2D
@@ -21,14 +23,27 @@ class_name IntroManager extends Node
 @export var dia : Dialogue
 @export var blockout : Blockout
 @export var animator_hint : AnimationPlayer
+@export var animator_pillchoice : AnimationPlayer
+@export var speaker_pillchoice : AudioStreamPlayer2D
+@export var intbranch_pillyes : InteractionBranch
+@export var intbranch_pillno : InteractionBranch
+@export var speaker_pillselect : AudioStreamPlayer2D
+@export var anim_revert : AnimationPlayer
+@export var endlessmode : Endless
 
+var allowingPills = false
 func _ready():
 	await get_tree().create_timer(.5, false).timeout
 	if (roundManager.playerData.playerEnteringFromDeath && !roundManager.playerData.enteringFromTrueDeath):
 		RevivalBathroomStart()
 	else:
 		MainBathroomStart()
-	pass
+	if (roundManager.playerData.playerEnteringFromDeath or roundManager.playerData.enteringFromTrueDeath): 
+		parent_pills.visible = false
+		allowingPills = false
+	if (!roundManager.playerData.playerEnteringFromDeath && !roundManager.playerData.enteringFromTrueDeath):
+		parent_pills.visible = true
+		allowingPills = true
 
 func MainBathroomStart():
 	RestRoomIdle()
@@ -39,6 +54,7 @@ func MainBathroomStart():
 	Hint()
 	cursor.SetCursor(true, true)
 	intbranch_bathroomdoor.interactionAllowed = true
+	if (allowingPills): intbranch_pillbottle.interactionAllowed = true
 
 func Hint():
 	await get_tree().create_timer(1, false).timeout
@@ -79,6 +95,7 @@ func RevivalBathroomStart():
 	dia.speaker_click.stream = dia.soundArray_clicks[3]
 	await get_tree().create_timer(3, false).timeout
 	cursor.SetCursor(true, true)
+	if (allowingPills): intbranch_pillbottle.interactionAllowed = true
 	intbranch_bathroomdoor.interactionAllowed = true
 	pass
 
@@ -88,6 +105,41 @@ func MainTrackLoad():
 	musicmanager.LoadTrack()
 	bpmlight.BeginMainLoop()
 	speaker_amb_restroom.play()
+
+func Interaction_PillBottle():
+	cursor.SetCursor(false, false)
+	intbranch_bathroomdoor.interactionAllowed = false
+	intbranch_pillbottle.interactionAllowed = false
+	animator_camera.play("camera check pills")
+	await get_tree().create_timer(.6, false).timeout
+	speaker_pillchoice.play()
+	await get_tree().create_timer(.3, false).timeout
+	animator_pillchoice.play("show")
+	await get_tree().create_timer(.7, false).timeout
+	cursor.SetCursor(true, true)
+	intbranch_pillyes.interactionAllowed = true
+	intbranch_pillno.interactionAllowed = true
+
+func SelectedPill(selected : bool):
+	cursor.SetCursor(false, false)
+	animator_pp.play("brightness fade out")
+	anim_revert.play("revert")
+	animator_pillchoice.play("hide")
+	speaker_pillchoice.stop()
+	speaker_pillselect.play()
+	intbranch_pillyes.interactionAllowed = false
+	intbranch_pillno.interactionAllowed = false
+	await get_tree().create_timer(2.05, false).timeout
+	if(selected): 
+		parent_pills.visible = false
+		endlessmode.SetupEndless()
+	RestRoomIdle()
+	animator_pp.play("brightness fade in")
+	await get_tree().create_timer(.6, false).timeout
+	cursor.SetCursor(true, true)
+	intbranch_bathroomdoor.interactionAllowed = true
+	if(!selected): intbranch_pillbottle.interactionAllowed = true
+	pass
 
 func Interaction_BackroomDoor():
 	roundManager.playerData.stat_doorsKicked += 1
@@ -102,6 +154,7 @@ func Interaction_BathroomDoor():
 	await get_tree().create_timer(5, false).timeout
 	cursor.SetCursor(true, true)
 	intbranch_backroomdoor.interactionAllowed = true
+	intbranch_pillbottle.interactionAllowed = false
 	pass
 
 

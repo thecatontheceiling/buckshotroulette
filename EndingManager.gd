@@ -103,6 +103,9 @@ func SetupEnding():
 	animator_backdrop.play("loop exterior")
 	animator_cam.play("camera loop car")
 
+var endless_overwriting = false
+var endless_roundsbeat = 0
+var endless_score = 0
 var glob_text_congratulations
 func FinalScore():
 	var playername = roundManager.playerData.playername
@@ -120,12 +123,14 @@ func FinalScore():
 	if (doors_kicked > 2): total_cash -= new_leg_bones_price
 	if (total_cash < 0): total_cash = 0
 	
+	if (endless_overwriting): total_cash = endless_score
 	#if (playername == "sex"): total_cash = 69
 	#if (playername == "leet"): total_cash = 1337
 	#if (playername == "snoop" or playername == "weed" or playername == "kush"): total_cash = 420
 	
 	var text_congratulations = "CONGRATULATIONS, " + playername + "!"
 	var text_shotsFired = "shots fired ........ " + str(shots_fired)
+	if (endless_overwriting): text_shotsFired = "rounds beat ........ " + str(endless_roundsbeat)
 	var text_shellsEjected = "shells ejected ..... " + str(shells_ejected)
 	var text_doorsKicked = "doors kicked ....... " + str(doors_kicked)
 	var text_cigSmoked = "cigarettes smoked .. " + str(cigarettes_smoked)

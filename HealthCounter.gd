@@ -85,7 +85,7 @@ func UpdateDisplayRoutine(isRaisingHealth : bool, goingToPreviousSocket : bool, 
 	if (indicating):
 		if (isRaisingHealth): speaker_beep.play()
 		else: speaker_noise.play()
-	if ((roundManager.health_opponent <= 2 or roundManager.health_player <= 2) && roundManager.playerData.currentBatchIndex == 2):
+	if ((roundManager.health_opponent <= 2 or roundManager.health_player <= 2) && roundManager.playerData.currentBatchIndex == 2 && !roundManager.endless):
 		if (roundManager.defibCutterReady && !trueDeathSetup): 
 			#roundManager.musicManager.EndTrack()
 			speaker_truedeath.play()
@@ -175,7 +175,7 @@ func Bootup():
 	for i in range(uiArray.size()):
 		uiArray[i].visible = true
 	await get_tree().create_timer(.85, false).timeout
-	if (roundManager.playerData.currentBatchIndex == 2 && !settingUpBroken):
+	if (roundManager.playerData.currentBatchIndex == 2 && !settingUpBroken && !roundManager.endless):
 		speaker_beep.pitch_scale = .09
 		SwapSkullSymbols()
 		settingUpBroken = true

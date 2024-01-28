@@ -98,7 +98,7 @@ func Shoot(who : String):
 			camera.BeginLerp("enemy")
 	#PLAY CORRECT SOUND. ASSIGN CURRENT ROUND IN CHAMBER
 	await get_tree().create_timer(2, false).timeout
-	var currentRoundInChamber = shellSpawner.sequenceArray[0]
+	var currentRoundInChamber = shellSpawner.sequenceArray[0]	
 	MainSlowDownRoutine(who, false)
 	if (who == "self"): whoshot = "player"
 	else: whoshot = "dealer"
@@ -172,7 +172,7 @@ func FinalizeShooting(playerCanGoAgain : bool, placeShotgunOnTable : bool, waitF
 	#delaying = false
 	if (roundManager.shellSpawner.sequenceArray.size() == 0 && dealerShotTrue): await get_tree().create_timer(2, false).timeout
 	#abc
-	if ((roundManager.health_opponent <= 2 or roundManager.health_player <= 2) && roundManager.playerData.currentBatchIndex == 2):
+	if ((roundManager.health_opponent <= 2 or roundManager.health_player <= 2) && roundManager.playerData.currentBatchIndex == 2 && !roundManager.endless):
 		if (roundManager.health_opponent <= 2 && !roundManager.wireIsCut_dealer):
 			await get_tree().create_timer(2, false).timeout
 		if (roundManager.health_player <= 2 && !roundManager.wireIsCut_player):
@@ -197,7 +197,7 @@ var whoshot = ""
 func CheckIfFinalShot():
 	temphealth_dealer = roundManager.health_opponent - roundManager.currentShotgunDamage
 	temphealth_player = roundManager.health_player - roundManager.currentShotgunDamage
-	if (!fired && roundManager.playerData.currentBatchIndex == 2):
+	if (!fired && roundManager.playerData.currentBatchIndex == 2 && !roundManager.endless):
 		if (temphealth_player <= 2 && whoshot == "player"):
 			roundManager.musicManager.EndTrack()
 			fired = true

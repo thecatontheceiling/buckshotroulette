@@ -70,6 +70,16 @@ func InteractWith(alias : String):
 		"signature machine button":
 			sign.GetInput(activeInteractionBranch.signatureButton_letterAlias, activeInteractionBranch.signatureButton_specialAlias)
 			activeInteractionBranch.assignedSignatureButton.Press()
+		"pill bottle":
+			intro.Interaction_PillBottle()
+		"pill choice no":
+			intro.SelectedPill(false)
+		"pill choice yes":
+			intro.SelectedPill(true)
+		"double yes":
+			shotgun.roundManager.Response(true)
+		"double no":
+			shotgun.roundManager.Response(false)
 
 func InteractWithGrid(tempGridIndex : int):
 	itemManager.PlaceDownItem(tempGridIndex)

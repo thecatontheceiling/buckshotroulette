@@ -36,7 +36,14 @@ var mainBatchIndex : int
 @export var gameover : GameOverManager
 @export var musicManager : MusicManager
 @export var deficutter : DefibCutter
+@export var anim_doubleor : AnimationPlayer
+@export var anim_yes : AnimationPlayer
+@export var anim_no : AnimationPlayer
+@export var intbranch_yes : InteractionBranch
+@export var intbranch_no : InteractionBranch
+@export var speaker_slot : AudioStreamPlayer2D
 
+var endless = false
 var shellLoadingSpedUp = false
 var dealerItems : Array[String]
 var currentShotgunDamage = 1
@@ -54,6 +61,9 @@ func _ready():
 	HideDealer()
 	#await get_tree().create_timer(.2, false).timeout
 	pass
+
+func _process(delta):
+	LerpScore()
 
 func BeginMainGame():
 	MainBatchSetup(true)
@@ -113,8 +123,25 @@ func MainBatchSetup(dealerEnterAtStart : bool):
 	#await get_tree().create_timer(1.5, false).timeout
 	StartRound(false)
 
+func GenerateRandomBatches():
+	for b in batchArray:
+		for i in range(b.roundArray.size()):
+			b.roundArray[i].startingHealth = randi_range(2, 4)
+			
+			var total_shells = randi_range(2, 8)
+			var amount_live = max(1, total_shells / 2)
+			var amount_blank = total_shells - amount_live
+			b.roundArray[i].amountBlank = amount_blank
+			b.roundArray[i].amountLive = amount_live
+			
+			b.roundArray[i].numberOfItemsToGrab = randi_range(1, 4)
+			b.roundArray[i].usingItems = true
+			var flip = randi_range(0, 1)
+			if flip == 1: b.roundArray[i].shufflingArray = true
+
 #APPEND ROUNDS FROM BATCH
 func SetupRoundArray():
+	if (endless): GenerateRandomBatches()
 	roundArray = []
 	for i in range(batchArray.size()):
 		if (batchArray[i].batchIndex == mainBatchIndex):
@@ -137,6 +164,7 @@ func RoundIndicator():
 	speaker_roundHum.play()
 	await get_tree().create_timer(.8, false).timeout
 	roundIndicator.visible = true
+	brief.ending.endless_roundsbeat += 1
 	animator_roundIndicator.play("round blinking")
 	await get_tree().create_timer(2, false).timeout
 	roundIndicatorParent.visible = false
@@ -152,7 +180,7 @@ func StartRound(gettingNext : bool):
 	#UNCUFF BOTH PARTIES BEFORE ITEM DISTRIBUTION
 	await (handcuffs.RemoveAllCuffsRoutine())
 	#FINAL SHOWDOWN DIALOGUE
-	if (playerData.currentBatchIndex == 2 && !defibCutterReady):
+	if (playerData.currentBatchIndex == 2 && !defibCutterReady && !endless):
 		shellLoader.dialogue.dealerLowPitched = true
 		camera.BeginLerp("enemy") 
 		await get_tree().create_timer(.6, false).timeout
@@ -287,6 +315,100 @@ func OutOfHealth(who : String):
 		await get_tree().create_timer(1, false).timeout
 		EndMainBatch()
 
+var doubling = false
+var prevscore = 0
+var mainscore = 0
+var elapsed = 0
+var dur = 3
+var lerpingscore = false
+var startscore
+var endscore
+@export var ui_score : Label3D
+@export var ui_doubleornothing : Label3D
+@export var speaker_key : AudioStreamPlayer2D
+@export var speaker_show : AudioStreamPlayer2D
+@export var speaker_hide : AudioStreamPlayer2D
+
+func BeginScoreLerp():
+	startscore = prevscore
+	if (!doubling): 
+		endscore = randi_range(50000, 70000)
+		prevscore = endscore
+	else: 
+		endscore = prevscore * 2
+		prevscore = endscore
+	doubling = true
+	speaker_slot.play()
+	camera.BeginLerp("yes no")
+	await get_tree().create_timer(1.1, false).timeout
+	ui_score.visible = true
+	ui_score.text = str(startscore)
+	await get_tree().create_timer(.5, false).timeout
+	elapsed = 0
+	lerpingscore = true
+	await get_tree().create_timer(3.08, false).timeout
+	await get_tree().create_timer(.46, false).timeout
+	ui_score.visible = false
+	ui_doubleornothing.visible = true
+	anim_doubleor.play("show")
+	speaker_show.play()
+	await get_tree().create_timer(.5, false).timeout
+	await get_tree().create_timer(1, false).timeout
+	cursor.SetCursor(true, true)
+	intbranch_no.interactionAllowed = true
+	intbranch_yes.interactionAllowed = true
+	pass
+
+func Response(rep : bool):
+	intbranch_no.interactionAllowed = false
+	intbranch_yes.interactionAllowed = false
+	cursor.SetCursor(false, false)
+	ui_doubleornothing.visible = false
+	if (rep): anim_yes.play("press")
+	else: anim_no.play("press")
+	speaker_key.play()
+	await get_tree().create_timer(.4, false).timeout
+	anim_doubleor.play("hide")
+	speaker_hide.play()
+	await get_tree().create_timer(.4, false).timeout
+	if (!rep):
+		speaker_slot.stop()
+		await get_tree().create_timer(.7, false).timeout
+		brief.ending.endless_score = endscore
+		brief.ending.endless_overwriting = true
+		camera.BeginLerp("enemy")
+		brief.MainRoutine()
+	else:
+		speaker_slot.stop()
+		await get_tree().create_timer(.7, false).timeout
+		#camera.BeginLerp("enemy")
+		RestartBatch()
+		pass
+
+func LerpScore():
+	if (lerpingscore):
+		elapsed += get_process_delta_time()
+		var c = clampf(elapsed / dur, 0.0, 1.0)
+		print("c: ", c)
+		var score = lerp(startscore, endscore, c)
+		ui_score.text = str(int(score))
+
+func RestartBatch():
+	playerData.currentBatchIndex = 0
+	if (barrelSawedOff):
+		await get_tree().create_timer(.6, false).timeout
+		await(segmentManager.GrowBarrel())
+	MainBatchSetup(false)
+	if (!dealerAtTable): 
+		if (!dealerCuffed): animator_dealerHands.play("dealer hands on table")
+		else: animator_dealerHands.play("dealer hands on table cuffed")
+		animator_dealer.play("dealer return to table")
+	for i in range(ejectManagers.size()):
+		ejectManagers[i].FadeOutShell()
+	#TRACK MANAGER
+	await get_tree().create_timer(2, false).timeout
+	musicManager.LoadTrack_FadeIn()
+
 func EndMainBatch():
 	#ADD TO BATCH INDEX
 	ignoring = true
@@ -297,7 +419,11 @@ func EndMainBatch():
 		healthCounter.speaker_truedeath.stop()
 		healthCounter.DisableCounter()
 		defibCutter.BlipError_Both()
+		if (endless): musicManager.EndTrack()
 		await get_tree().create_timer(.4, false).timeout
+		if (endless):
+			BeginScoreLerp()
+			return
 		#gameover.PlayerWon()
 		camera.BeginLerp("enemy")
 		await get_tree().create_timer(.7, false).timeout
