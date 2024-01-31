@@ -1,4 +1,4 @@
-yo hi so watch this guys video if youre too lazy to read the code 
+watch this guys video if youre too lazy to read the code 
 https://youtu.be/kIf-2b8pu0A 
 if you dont watch your family will be at risk of consuming large amounts of big lead chunks
 
