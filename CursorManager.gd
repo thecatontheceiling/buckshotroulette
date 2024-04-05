@@ -5,15 +5,16 @@ class_name CursorManager extends Node
 @export var cursor_hover : CompressedTexture2D
 @export var cursor_invalid : CompressedTexture2D
 var cursor_visible = false
+var controller_active = false
 
 func _ready():
 	SetCursor(false, false)
 
 func SetCursor(isVisible : bool, playSound : bool):
-	if (playSound):
-		speaker.play()
+	if (playSound): speaker.play()
 	if (isVisible):
-		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		if (!controller_active): Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		else: Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 		cursor_visible = true
 	if (!isVisible):
 		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)

@@ -7,6 +7,8 @@ class_name HandManager extends Node
 @export var handArray_L : Array[Node3D]
 @export var handArray_R : Array[Node3D]
 @export var gridOffsetArray : Array[Vector3] #ITEM'S ACTIVE GRID INDEX STORED IN PICKUP INDICATOR: dealerGridIndex
+@export var inter : ItemInteraction
+@export var cam : CameraManager
 
 @export var handParent_L : Node3D
 @export var handParent_R : Node3D
@@ -14,9 +16,13 @@ class_name HandManager extends Node
 @export var hand_defaultR : Node3D
 @export var hand_cigarettepack : Node3D 	#L
 @export var hand_beer : Node3D 				#L
+@export var hand_medicine : Node3D			#L
+@export var hand_inverter : Node3D			#L
+@export var hand_adrenaline : Node3D		#L
 @export var hand_handcuffs : Node3D 		#R
 @export var hand_handsaw : Node3D 			#R
 @export var hand_magnifier : Node3D 		#R
+@export var hand_burnerphone : Node3D		#R
 
 @export var lerpDuration : float
 @export var handRot_left : Vector3 #hand rotation when grabing from left grids
@@ -25,6 +31,7 @@ class_name HandManager extends Node
 @export var parentOriginal_rotL : Vector3
 @export var parentOriginal_posR : Vector3
 @export var parentOriginal_rotR : Vector3
+@export var amounts : Amounts
 var moving = false
 var lerping_L = false
 var lerping_R = false
@@ -41,6 +48,7 @@ var activeItemToGrab
 func _process(delta):
 	LerpHandMovement()
 
+var stealing = false
 func PickupItemFromTable(itemName : String):
 	dealerAI.Speaker_HandCrack()
 	var activeIndex
@@ -58,13 +66,20 @@ func PickupItemFromTable(itemName : String):
 	ToggleHandVisible("BOTH", false)
 	hand_defaultL.visible = true
 	hand_defaultR.visible = true
-	if (itemName == "beer" or itemName == "cigarettes"): whichHandToGrabWith = "left"
+	if (itemName == "beer" or itemName == "cigarettes" or itemName == "expired medicine" or itemName == "inverter" or itemName == "adrenaline"): whichHandToGrabWith = "left"
 	else: whichHandToGrabWith = "right"
 	whichGridSide = activeInstance.get_child(0).whichSide
 	animator_hands.play("RESET")
 	BeginHandLerp(whichHandToGrabWith, activeIndex, whichGridSide)
 	if (whichGridSide == "right"): animator_dealerHeadLook.play("dealer look right")
 	else: animator_dealerHeadLook.play("dealer look left")
+	if (stealing):
+		if (whichGridSide == "right"): cam.BeginLerp("player item grid left")
+		else: cam.BeginLerp("player item grid right")
+		var amountArray : Array[AmountResource] = amounts.array_amounts
+		for res in amountArray:
+			if res.itemName == itemName: res.amount_player -= 1
+			break
 	await get_tree().create_timer(lerpDuration -.4, false).timeout
 	if (whichHandToGrabWith == "right"): hand_defaultR.visible = false
 	else: hand_defaultL.visible = false
@@ -81,23 +96,71 @@ func PickupItemFromTable(itemName : String):
 			itemManager.numberOfCigs_dealer -= 1
 		"beer":
 			hand_beer.visible = true
+		"expired medicine":
+			hand_medicine.visible = true
+		"inverter":
+			hand_inverter.visible = true
+		"burner phone":
+			hand_burnerphone.visible = true
+		"adrenaline":
+			hand_adrenaline.visible = true
 	itemManager.itemArray_instances_dealer.remove_at(matchIndex)
 	var tempindicator = activeInstance.get_child(0)
 	var gridname = tempindicator.dealerGridName
-	itemManager.gridParentArray_enemy_available.append(gridname)
+	if (!stealing): itemManager.gridParentArray_enemy_available.append(gridname)
+	if (stealing): inter.RemovePlayerItemFromGrid(activeInstance)
 	activeInstance.queue_free()
 	await get_tree().create_timer(.2, false).timeout
 	ReturnHand()
+	if (stealing):
+		cam.BeginLerp("enemy")
 	if (whichGridSide == "right"): animator_dealerHeadLook.play("dealer look forward from right")
 	else: animator_dealerHeadLook.play("dealer look forward from left")
 	await get_tree().create_timer(lerpDuration + .01, false).timeout
 	HandFailsafe()
 	var animationName = "dealer use " + itemName
+	PlaySound(itemName)
 	animator_hands.play("RESET")
 	animator_hands.play(animationName)
 	var length = animator_hands.get_animation(animationName).get_length()
 	moving = false
 	await get_tree().create_timer(length, false).timeout
+	stealing = false
+	pass
+
+@export var speaker_interaction : AudioStreamPlayer2D
+@export var sound_adrenaline : AudioStream
+@export var sound_medicine : AudioStream
+@export var sound_burnerphone : AudioStream
+@export var sound_inverter : AudioStream
+func PlaySound(itemName : String):
+	match itemName:
+		"adrenaline":
+			speaker_interaction.stream = sound_adrenaline
+			speaker_interaction.play()
+		"expired medicine":
+			speaker_interaction.stream = sound_medicine
+			speaker_interaction.play()
+		"burner phone":
+			speaker_interaction.stream = sound_burnerphone
+			speaker_interaction.play()
+		"inverter":
+			speaker_interaction.stream = sound_inverter
+			speaker_interaction.play()
+
+func RemoveItem_Remote(activeInstance : Node3D):
+	var activeIndex
+	var whichHandToGrabWith
+	var whichGridSide
+	var matchIndex
+	itemManager.itemArray_dealer.erase(activeInstance.get_child(1).itemName.to_lower())
+	itemManager.numberOfItemsGrabbed_enemy -= 1
+	activeIndex = activeInstance.get_child(0).dealerGridIndex
+	whichGridSide = activeInstance.get_child(0).whichSide
+	itemManager.itemArray_instances_dealer.erase(activeInstance)
+	var tempindicator = activeInstance.get_child(0)
+	var gridname = tempindicator.dealerGridName
+	itemManager.gridParentArray_enemy_available.append(gridname)
 	pass
 
 func ToggleHandVisible(selectedHand : String, state : bool):

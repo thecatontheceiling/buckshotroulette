@@ -55,7 +55,7 @@ func CutWire(who : String):
 	cam.BeginLerp("enemy")
 	await get_tree().create_timer(3, false).timeout
 	if (!cutDialogueSent):
-		dia.ShowText_Forever("ARE YOU READY?")
+		dia.ShowText_Forever(tr("ARE YOU READY"))
 		await get_tree().create_timer(4, false).timeout
 		dia.HideText()
 		await get_tree().create_timer(.2, false).timeout

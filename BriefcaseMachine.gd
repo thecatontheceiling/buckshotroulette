@@ -16,6 +16,9 @@ class_name BriefcaseMachine extends Node
 @export var intbranch_L : InteractionBranch
 @export var intbranch_R : InteractionBranch
 @export var intbranch_lid : InteractionBranch
+@export var controller : ControllerManager
+@export var btnParent_briefcase : Control
+@export var btn_left : Control
 
 var latchRaisedL = false
 var latchRaisedR = false
@@ -34,6 +37,9 @@ func MainRoutine():
 	cursor.SetCursor(true, true)
 	intbranch_L.interactionAllowed = true
 	intbranch_R.interactionAllowed = true
+	btnParent_briefcase.visible = true
+	if (cursor.controller_active): btn_left.grab_focus()
+	controller.previousFocus = btn_left
 
 func CheckLatches():
 	if (latchRaisedL == true && latchRaisedR == true):
@@ -56,6 +62,7 @@ func OpenLatch(alias : String):
 			CheckLatches()
 
 func OpenLid():
+	btnParent_briefcase.visible = false
 	cursor.SetCursor(false, false)
 	intbranch_lid.interactionAllowed = false
 	anim_lid.play("open")

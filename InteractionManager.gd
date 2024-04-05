@@ -10,6 +10,7 @@ class_name InteractionManager extends Node
 @export var decision : DecisionTextManager
 @export var itemManager : ItemManager
 @export var itemInteraction : ItemInteraction
+@export var crt : CRT
 var activeParent
 var activeInteractionBranch
 var checking = true
@@ -22,11 +23,14 @@ func _process(delta):
 
 func _input(event):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		if (activeInteractionBranch != null && activeInteractionBranch.interactionAllowed && !activeInteractionBranch.interactionInvalid):
-			var childArray = activeInteractionBranch.get_parent().get_children()
-			for i in range(childArray.size()): if (childArray[i] is PickupIndicator): childArray[i].SnapToMax()
-			if (!activeInteractionBranch.isGrid): InteractWith(activeInteractionBranch.interactionAlias)
-			else: InteractWithGrid(activeInteractionBranch.gridIndex)
+		MainInteractionEvent()
+
+func MainInteractionEvent():
+	if (activeInteractionBranch != null && activeInteractionBranch.interactionAllowed && !activeInteractionBranch.interactionInvalid):
+		var childArray = activeInteractionBranch.get_parent().get_children()
+		for i in range(childArray.size()): if (childArray[i] is PickupIndicator): childArray[i].SnapToMax()
+		if (!activeInteractionBranch.isGrid): InteractWith(activeInteractionBranch.interactionAlias)
+		else: InteractWithGrid(activeInteractionBranch.gridIndex)
 
 func CheckIfHovering():
 	if (activeInteractionBranch != null && activeInteractionBranch.interactionAllowed):
@@ -41,7 +45,6 @@ func InteractWith(alias : String):
 	match(alias):
 		"shotgun":
 			shotgun.GrabShotgun()
-			pass
 		"text dealer":
 			shotgun.Shoot("dealer")
 			decision.SetUI(false)
@@ -80,6 +83,17 @@ func InteractWith(alias : String):
 			shotgun.roundManager.Response(true)
 		"double no":
 			shotgun.roundManager.Response(false)
+		"crt":
+			intro.Interaction_CRT()
+		"crt button":
+			if (activeInteractionBranch.crtButton_alias != ""): 
+				#activeInteractionBranch.get_parent().get_child(1).Press()
+				crt.Interaction(activeInteractionBranch.crtButton_alias)
+
+func SignatureButtonRemote(assignedBranch : SignButton, alias : String):
+	sign.GetInput(alias, alias)
+	assignedBranch.Press()
+	pass
 
 func InteractWithGrid(tempGridIndex : int):
 	itemManager.PlaceDownItem(tempGridIndex)

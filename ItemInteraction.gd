@@ -1,5 +1,6 @@
 class_name ItemInteraction extends Node
 
+@export var medicine : Medicine
 @export var roundManager : RoundManager
 @export var dealerIntelligence : DealerIntelligence
 @export var cursor : CursorManager
@@ -8,12 +9,24 @@ class_name ItemInteraction extends Node
 @export var lerpDuration : float
 @export var pos_hand : Vector3
 @export var rot_hand : Vector3
+@export var pos_hand_stealing : Vector3
+@export var rot_hand_stealing : Vector3
+var pos_hand_main : Vector3
+var rot_hand_main : Vector3
 @export var animator_dealerHands : AnimationPlayer
 @export var animator_playerHands : AnimationPlayer
 @export var camera : CameraManager
 @export var shellEject_player : ShellEjectManager
 @export var speaker_pickup : AudioStreamPlayer2D
 @export var speaker_breakcuffs : AudioStreamPlayer2D
+@export var speaker_interaction : AudioStreamPlayer2D
+@export var sound_use_burnerphone : AudioStream
+@export var sound_use_inverter : AudioStream
+@export var sound_use_medicine : AudioStream
+@export var sound_use_adrenaline : AudioStream
+@export var amounts : Amounts
+@export var items: ItemManager
+@export var hands : HandManager
 
 var temp_itemParent
 var pos_current
@@ -25,19 +38,31 @@ var temp_indicator
 var elapsed = 0
 var moving = false
 
+func _ready():
+	pos_hand_main = pos_hand
+	rot_hand_main = rot_hand
+
 func _process(delta):
 	LerpMovement()
 
+var stealing = false
+var stealing_fs = false
 func PickupItemFromTable(itemParent : Node3D, passedItemName : String):
+	if (stealing): 	items.Counter(false)
 	#SET INTERACTION PERMISSIONS, HIDE CURSOR
 	perm.SetIndicators(false)
 	perm.SetInteractionPermissions(false)
 	perm.RevertDescriptionUI()
 	cursor.SetCursor(false, false)
+	roundManager.ClearDeskUI(true)
 	#GET VARIABLES
 	temp_itemParent = itemParent
 	temp_indicator = itemParent.get_child(0)
 	temp_interaction = itemParent.get_child(1)
+	#STEAL
+	if (stealing && stealing_fs): 
+		hands.RemoveItem_Remote(temp_itemParent)
+		items.RevertItemSteal()
 	#PLAY PICKUP SOUND
 	speaker_pickup.stream = temp_indicator.sound_pickup
 	speaker_pickup.pitch_scale = randf_range(.93, 1.0)
@@ -50,6 +75,7 @@ func PickupItemFromTable(itemParent : Node3D, passedItemName : String):
 	temp_indicator.interactionAllowed = false
 	temp_indicator.SnapToMax()
 	temp_interaction.interactionAllowed = false
+	var temp_name = temp_interaction.itemName
 	#LERP
 	pos_current = temp_itemParent.transform.origin
 	rot_current = temp_itemParent.rotation_degrees
@@ -59,12 +85,34 @@ func PickupItemFromTable(itemParent : Node3D, passedItemName : String):
 	moving = true
 	await get_tree().create_timer(lerpDuration -.1, false).timeout
 	moving = false
-	RemovePlayerItemFromGrid(temp_itemParent)
+	if (!stealing): RemovePlayerItemFromGrid(temp_itemParent)
 	temp_itemParent.queue_free() #check where player grid index is given, and remove item from player item array, unoccupy given grid
+	if (stealing):
+		camera.BeginLerp("home")
+		stealing_fs = false
+		await get_tree().create_timer(.4, false).timeout
+		pos_hand = pos_hand_main
+		rot_hand = rot_hand_main
+		var amountArray : Array[AmountResource] = amounts.array_amounts
+		for res in amountArray:
+			if (res.itemName == temp_name): 
+				res.amount_dealer -= 1
+				break
 	InteractWith(passedItemName)
+	stealing = false
 
 func InteractWith(itemName : String):
 	#INTERACTION
+	var amountArray : Array[AmountResource] = amounts.array_amounts
+	for res in amountArray:
+		if (res.itemName == itemName): 
+			res.amount_player -= 1
+			break
+	
+	var isdup = false
+	for it in roundManager.playerCurrentTurnItemArray:
+		if (it == itemName): isdup = true; break
+	if (!isdup): roundManager.playerCurrentTurnItemArray.append(itemName)
 	match (itemName):
 		"handcuffs":
 			animator_dealerHands.play("dealer get handcuffed")
@@ -107,6 +155,53 @@ func InteractWith(itemName : String):
 			roundManager.currentShotgunDamage = 2
 			await get_tree().create_timer(4.28 + .2, false).timeout
 			EnablePermissions()
+		"expired medicine":
+			PlaySound(sound_use_medicine)
+			animator_playerHands.play("player use expired pills")
+			medicine.UseMedicine()
+			#await get_tree().create_timer(4.28 +.2 + 4.3, false).timeout
+			#EnablePermissions()
+		"inverter":
+			PlaySound(sound_use_inverter)
+			animator_playerHands.play("player use inverter")
+			if (roundManager.shellSpawner.sequenceArray[0] == "live"): roundManager.shellSpawner.sequenceArray[0] = "blank"
+			else: roundManager.shellSpawner.sequenceArray[0] = "live"
+			await get_tree().create_timer(3.2, false).timeout
+			EnablePermissions()
+		"burner phone":
+			PlaySound(sound_use_burnerphone)
+			animator_playerHands.play("player use burner phone")
+			await get_tree().create_timer(7.9, false).timeout
+			EnablePermissions()
+		"adrenaline":
+			PlaySound(sound_use_adrenaline)
+			animator_playerHands.play("player use adrenaline")
+			await get_tree().create_timer(5.3 + .2, false).timeout
+			items.SetupItemSteal()
+			#EnablePermissions()
+	CheckAchievement_koni()
+	CheckAchievement_full()
+
+@export var ach : Achievement
+func CheckAchievement_koni():
+	if ("cigarettes" in roundManager.playerCurrentTurnItemArray and "beer" in roundManager.playerCurrentTurnItemArray and "expired medicine" in roundManager.playerCurrentTurnItemArray): ach.UnlockAchievement("ach9")
+
+func CheckAchievement_full():
+	var all = ["handsaw", "magnifying glass", "beer", "cigarettes", "handcuffs", "expired medicine", "burner phone", "adrenaline", "inverter"]
+	var pl = roundManager.playerCurrentTurnItemArray
+	if (all.size() == pl.size()): ach.UnlockAchievement("ach12")
+
+@export var anim_pp : AnimationPlayer
+@export var filter : FilterController
+func AdrenalineHit():
+	anim_pp.play("adrenaline brightness")
+	filter.BeginPan(filter.lowPassDefaultValue, filter.lowPassMaxValue)
+	await get_tree().create_timer(6, false).timeout
+	filter.BeginPan(filter.effect_lowPass.cutoff_hz, filter.lowPassDefaultValue)
+
+func PlaySound(clip : AudioStream):
+	speaker_interaction.stream = clip
+	speaker_interaction.play()
 
 func EnablePermissions():
 	perm.SetStackInvalidIndicators()
@@ -114,6 +209,17 @@ func EnablePermissions():
 	perm.SetInteractionPermissions(true)
 	perm.RevertDescriptionUI()
 	cursor.SetCursor(true, true)
+	roundManager.SetupDeskUI()
+
+func DisableShotgun():
+	perm.DisableShotgun()
+
+func DisablePermissions():
+	perm.SetIndicators(false)
+	perm.SetInteractionPermissions(false)
+	perm.RevertDescriptionUI()
+	cursor.SetCursor(false, false)
+	roundManager.ClearDeskUI(true)
 
 func PlaySound_BreakHandcuffs():
 	speaker_breakcuffs.play()

@@ -1,6 +1,8 @@
 class_name SaveFileManager extends Node
 
-const savePath := "user://buckshotroulette.save"
+const savePath := "user://buckshotroulette_main_12.shell"
+const savePath_pills := "user://buckshotroulette_pills.shell"
+const savePath_stats := "user://buckshotroulette_playerstats.shell"
 var data = {}
 @export var roundManager : RoundManager
 @export var isMainMenu : bool
@@ -36,20 +38,6 @@ func SaveGame():
 	}
 	var file = FileAccess.open(savePath, FileAccess.WRITE)
 	file.store_var(data)
-	#file.store_var(roundManager.playerData.hasReadIntroduction)
-	#file.store_var(roundManager.playerData.hasReadItemSwapIntroduction)
-	#file.store_var(roundManager.playerData.hasReadItemDistributionIntro)
-	#file.store_var(roundManager.playerData.currentBatchIndex)
-	#file.store_var(roundManager.playerData.playerEnteringFromDeath)
-	#file.store_var(roundManager.playerData.testValue)
-	#file.store_var(roundManager.playerData.hasReadItemDistributionIntro2)
-	#file.store_var(roundManager.playerData.numberOfDialogueRead)
-	#file.store_var(roundManager.playerData.skippingShellDescription)
-	#file.store_var(roundManager.playerData.indicatorShown)
-	#file.store_var(roundManager.playerData.cutterDialogueRead)
-	#file.store_var(roundManager.playerData.enteringFromTrueDeath)
-	#file.store_var(roundManager.playerData.hasSignedWaiver)
-	#file.store_string(roundManager.playerData.playername)
 	file.close()
 
 func LoadGame():
@@ -78,20 +66,6 @@ func LoadGame():
 		roundManager.playerData.stat_doorsKicked = data.stat_doorsKicked
 		roundManager.playerData.stat_cigSmoked = data.stat_cigSmoked
 		roundManager.playerData.stat_beerDrank = data.stat_beerDrank
-		#roundManager.playerData.hasReadIntroduction = file.get_var(roundManager.playerData.hasReadIntroduction)
-		#roundManager.playerData.hasReadItemSwapIntroduction = file.get_var(roundManager.playerData.hasReadItemSwapIntroduction)
-		#roundManager.playerData.hasReadItemDistributionIntro = file.get_var(roundManager.playerData.hasReadItemDistributionIntro)
-		#roundManager.playerData.currentBatchIndex = file.get_var(roundManager.playerData.currentBatchIndex)
-		#roundManager.playerData.playerEnteringFromDeath = file.get_var(roundManager.playerData.playerEnteringFromDeath)
-		#roundManager.playerData.testValue = file.get_var(roundManager.playerData.testValue)
-		#roundManager.playerData.hasReadItemDistributionIntro2 = file.get_var(roundManager.playerData.testValue)
-		#roundManager.playerData.numberOfDialogueRead = file.get_var(roundManager.playerData.numberOfDialogueRead)
-		#roundManager.playerData.skippingShellDescription = file.get_var(roundManager.playerData.skippingShellDescription)
-		#roundManager.playerData.indicatorShown = file.get_var(roundManager.playerData.indicatorShown)
-		#roundManager.playerData.cutterDialogueRead = file.get_var(roundManager.playerData.cutterDialogueRead)
-		#roundManager.playerData.enteringFromTrueDeath = file.get_var(roundManager.playerData.enteringFromTrueDeath)
-		#roundManager.playerData.hasSignedWaiver = file.get_var(roundManager.playerData.hasSignedWaiver)
-		#roundManager.playerData.playername = file.get_as_text(roundManager.playerData.playername)
 		file.close()
 
 func ClearSave():

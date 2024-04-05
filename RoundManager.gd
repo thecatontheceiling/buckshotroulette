@@ -9,6 +9,7 @@ class_name RoundManager extends Node
 @export var death : DeathManager
 @export var playerData : PlayerData
 @export var cursor : CursorManager
+@export var controller : ControllerManager
 @export var perm : PermissionManager
 @export var health_player : int
 @export var health_opponent : int
@@ -56,6 +57,7 @@ var waitingForDealerReturn = false
 var barrelSawedOff = false
 var defibCutterReady = false
 var trueDeathActive = false
+var playerCurrentTurnItemArray = []
 
 func _ready():
 	HideDealer()
@@ -64,6 +66,12 @@ func _ready():
 
 func _process(delta):
 	LerpScore()
+	InitialTimer()
+
+var counting = false
+var initial_time = 0
+func InitialTimer():
+	if (counting): initial_time += get_process_delta_time()
 
 func BeginMainGame():
 	MainBatchSetup(true)
@@ -87,7 +95,7 @@ func MainBatchSetup(dealerEnterAtStart : bool):
 			await get_tree().create_timer(2, false).timeout
 			var greeting = true
 			if (!playerData.hasSignedWaiver):
-				shellLoader.dialogue.ShowText_Forever("PLEASE SIGN THE WAIVER.")
+				shellLoader.dialogue.ShowText_Forever(tr("WAIVER"))
 				await get_tree().create_timer(2.3, false).timeout
 				shellLoader.dialogue.HideText()
 				camera.BeginLerp("home")
@@ -95,12 +103,12 @@ func MainBatchSetup(dealerEnterAtStart : bool):
 				return
 			if (!dealerHasGreeted && greeting):
 				var tempstring
-				if (!playerData.enteringFromTrueDeath): tempstring = "WELCOME BACK."
+				if (!playerData.enteringFromTrueDeath): tempstring = tr("WELCOME")
 				else: 
 					shellSpawner.dialogue.dealerLowPitched = true
 					tempstring = "..."
 				if (!playerData.playerEnteringFromDeath):
-					shellLoader.dialogue.ShowText_Forever("WELCOME TO\nBUCKSHOT ROULETTE.")
+					shellLoader.dialogue.ShowText_Forever("...")
 					await get_tree().create_timer(2.3, false).timeout
 					shellLoader.dialogue.HideText()
 					dealerHasGreeted = true
@@ -121,7 +129,13 @@ func MainBatchSetup(dealerEnterAtStart : bool):
 	healthCounter.SetupHealth()
 	lerping = true
 	#await get_tree().create_timer(1.5, false).timeout
+	if (!endless): ParseMainGameAmounts()
 	StartRound(false)
+
+@export var amounts : Amounts
+func ParseMainGameAmounts():
+	for res in amounts.array_amounts:
+		res.amount_active = res.amount_main
 
 func GenerateRandomBatches():
 	for b in batchArray:
@@ -134,7 +148,7 @@ func GenerateRandomBatches():
 			b.roundArray[i].amountBlank = amount_blank
 			b.roundArray[i].amountLive = amount_live
 			
-			b.roundArray[i].numberOfItemsToGrab = randi_range(1, 4)
+			b.roundArray[i].numberOfItemsToGrab = randi_range(2, 5)
 			b.roundArray[i].usingItems = true
 			var flip = randi_range(0, 1)
 			if flip == 1: b.roundArray[i].shufflingArray = true
@@ -187,16 +201,20 @@ func StartRound(gettingNext : bool):
 		#var origdelay = shellLoader.dialogue.incrementDelay
 		#shellLoader.dialogue.incrementDelay = .1
 		if (!playerData.cutterDialogueRead):
-			shellLoader.dialogue.ShowText_Forever("LONG LAST, WE ARRIVE\nAT THE FINAL SHOWDOWN.")
+			shellLoader.dialogue.scaling = true
+			shellLoader.dialogue.ShowText_Forever(tr("FINAL SHOW1"))
 			await get_tree().create_timer(4, false).timeout
-			shellLoader.dialogue.ShowText_Forever("NO MORE DEFIBRILLATORS.\nNO MORE BLOOD TRANSFUSIONS.")
+			shellLoader.dialogue.scaling = true
+			shellLoader.dialogue.ShowText_Forever(tr("FINAL SHOW2"))
 			await get_tree().create_timer(4, false).timeout
-			shellLoader.dialogue.ShowText_Forever("NOW, ME AND YOU, WE ARE DANCING\nON THE EDGE OF LIFE AND DEATH.")
+			shellLoader.dialogue.scaling = true
+			shellLoader.dialogue.ShowText_Forever(tr("FINAL SHOW3"))
 			await get_tree().create_timer(4.8, false).timeout
+			shellLoader.dialogue.scaling = false
 			shellLoader.dialogue.HideText()
 			playerData.cutterDialogueRead = true
 		else:
-			shellLoader.dialogue.ShowText_Forever("I BETTER NOT\nSEE YOU AGAIN.")
+			shellLoader.dialogue.ShowText_Forever(tr("BETTER NOT"))
 			await get_tree().create_timer(3, false).timeout
 			shellLoader.dialogue.HideText()
 		await(deficutter.InitialSetup())
@@ -303,10 +321,32 @@ func BeginPlayerTurn():
 	if (requestedWireCut):
 		await(defibCutter.CutWire(wireToCut))
 	await get_tree().create_timer(.6, false).timeout
+	playerCurrentTurnItemArray = []
 	perm.SetStackInvalidIndicators()
 	cursor.SetCursor(true, true)
 	perm.SetIndicators(true)
 	perm.SetInteractionPermissions(true)
+	SetupDeskUI()
+
+@export var deskUI_parent : Control
+@export var deskUI_shotgun : Control
+@export var deskUI_briefcase : Control
+@export var deskUI_grids : Array[Control]
+func SetupDeskUI():
+	deskUI_parent.visible = true
+	deskUI_shotgun.visible = true
+	if (roundArray[currentRound].usingItems):
+		for b in deskUI_grids: b.visible = true
+	
+	if (cursor.controller_active): deskUI_shotgun.grab_focus()
+	controller.previousFocus = deskUI_shotgun
+
+func ClearDeskUI(includingParent : bool):
+	if (includingParent): deskUI_parent.visible = false
+	deskUI_shotgun.visible = false
+	for b in deskUI_grids: b.visible = false
+	controller.previousFocus = null
+	pass
 
 func OutOfHealth(who : String):
 	if (who == "player"): 
@@ -320,6 +360,11 @@ var prevscore = 0
 var mainscore = 0
 var elapsed = 0
 var dur = 3
+var double_or_nothing_rounds_beat = 0
+var double_or_nothing_score = 0
+var double_or_nothing_initial_score = 0
+var doubled = false
+
 var lerpingscore = false
 var startscore
 var endscore
@@ -329,14 +374,26 @@ var endscore
 @export var speaker_show : AudioStreamPlayer2D
 @export var speaker_hide : AudioStreamPlayer2D
 
+@export var btnParent_doubleor : Control
+@export var btn_yes : Control
 func BeginScoreLerp():
 	startscore = prevscore
 	if (!doubling): 
-		endscore = randi_range(50000, 70000)
+		double_or_nothing_rounds_beat += 1
+		var ten_minutes_seconds = 600
+		var ten_minutes_score_loss = 40000
+		var score_deduction = initial_time / ten_minutes_seconds * ten_minutes_score_loss	
+		endscore = 70000 - int(score_deduction)
+		if (endscore < 10): endscore = 10
 		prevscore = endscore
+		double_or_nothing_score = prevscore
+		double_or_nothing_initial_score = prevscore
 	else: 
+		doubled = true
 		endscore = prevscore * 2
 		prevscore = endscore
+		double_or_nothing_rounds_beat += 1
+		double_or_nothing_score = prevscore
 	doubling = true
 	speaker_slot.play()
 	camera.BeginLerp("yes no")
@@ -357,9 +414,17 @@ func BeginScoreLerp():
 	cursor.SetCursor(true, true)
 	intbranch_no.interactionAllowed = true
 	intbranch_yes.interactionAllowed = true
+	btnParent_doubleor.visible = true
+	if (cursor.controller_active): btn_yes.grab_focus()
+	controller.previousFocus = btn_yes
 	pass
 
+func RevertDoubleUI():
+	btnParent_doubleor.visible = false
+
+@export var ach : Achievement
 func Response(rep : bool):
+	RevertDoubleUI()
 	intbranch_no.interactionAllowed = false
 	intbranch_yes.interactionAllowed = false
 	cursor.SetCursor(false, false)
@@ -389,7 +454,6 @@ func LerpScore():
 	if (lerpingscore):
 		elapsed += get_process_delta_time()
 		var c = clampf(elapsed / dur, 0.0, 1.0)
-		print("c: ", c)
 		var score = lerp(startscore, endscore, c)
 		ui_score.text = str(int(score))
 
@@ -422,6 +486,7 @@ func EndMainBatch():
 		if (endless): musicManager.EndTrack()
 		await get_tree().create_timer(.4, false).timeout
 		if (endless):
+			counting = false
 			BeginScoreLerp()
 			return
 		#gameover.PlayerWon()

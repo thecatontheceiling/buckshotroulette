@@ -32,7 +32,9 @@ func SetupHealth():
 	if (roundManager.roundArray[roundManager.currentRound].isFirstRound):
 		if (setting):
 			ui_playername.text = roundManager.playerData.playername.to_upper()
-			ui_playerwin.text = roundManager.playerData.playername.to_upper() + " WINS!"
+			var playername_upper = roundManager.playerData.playername.to_upper()
+			ui_playerwin.text = tr("PLAYERWIN") % [playername_upper] 
+			#ui_playerwin.text = roundManager.playerData.playername.to_upper() + " " + tr("PLAYERWIN")
 			setting = false
 		roundManager.health_player = roundManager.roundArray[roundManager.currentRound].startingHealth
 		roundManager.health_opponent = roundManager.roundArray[roundManager.currentRound].startingHealth
@@ -60,6 +62,7 @@ func FlickerLastDigit():
 var playerShotSelf = false
 var trueDeathSetup = false
 var checkingPlayer = false
+var skipping_careful = false
 func UpdateDisplayRoutine(isRaisingHealth : bool, goingToPreviousSocket : bool, showPlayerWin : bool):
 	var indicating = true
 	if (roundManager.dealerCuffed && playerShotSelf): 
@@ -102,11 +105,12 @@ func UpdateDisplayRoutine(isRaisingHealth : bool, goingToPreviousSocket : bool, 
 			roundManager.health_player = 1
 	#if (roundManager.shellSpawner.sequenceArray[0] == null): await get_tree().create_timer(.8, false).timeout
 	await get_tree().create_timer(.7, false).timeout
-	if (roundManager.health_player == 1 && !dialogueEntered_player && !roundManager.wireIsCut_player):
-		if (!roundManager.wireIsCut_player): dialogue.ShowText_ForDuration("CAREFUL, NOW ...", 3)
-		else: dialogue.ShowText_ForDuration("OH MY ...", 3)
+	if (roundManager.health_player == 1 && !dialogueEntered_player && !roundManager.wireIsCut_player && !skipping_careful):
+		if (!roundManager.wireIsCut_player): dialogue.ShowText_ForDuration(tr("CAREFUL"), 3)
+		else: dialogue.ShowText_ForDuration("...", 3)
 		await get_tree().create_timer(3, false).timeout
 		dialogueEntered_player = true
+	if skipping_careful: skipping_careful = false
 	var lerpingCamera = true
 	if (roundManager.shellSpawner.sequenceArray.size() == 0): 
 		#lerpingCamera = false
@@ -117,11 +121,17 @@ func UpdateDisplayRoutine(isRaisingHealth : bool, goingToPreviousSocket : bool, 
 	await get_tree().create_timer(.4, false).timeout
 
 #why can I not add functions with arguments into godot animator :sob:
+var overriding_medicine_adding = false
+var overriding_medicine = false
 func UpdateDisplayRoutineCigarette_Enemy():
 	var maxHealth = roundManager.roundArray[0].startingHealth
 	var changingHealth = false
 	var prevhealth = roundManager.health_opponent
-	if (!roundManager.wireIsCut_dealer): roundManager.health_opponent += 1
+	if (!roundManager.wireIsCut_dealer && !overriding_medicine): roundManager.health_opponent += 1
+	if (overriding_medicine && !roundManager.wireIsCut_dealer): 
+		if(overriding_medicine_adding): roundManager.health_opponent += 2
+		else: 
+			roundManager.health_opponent -= 1
 	if (roundManager.health_opponent > maxHealth): roundManager.health_opponent = maxHealth
 	var newhealth = roundManager.health_opponent
 	if (newhealth != prevhealth): changingHealth = true
@@ -132,10 +142,13 @@ func UpdateDisplayRoutineCigarette_Player():
 	var maxHealth = roundManager.roundArray[0].startingHealth
 	var changingHealth = false
 	var prevhealth = roundManager.health_player
-	if (!roundManager.wireIsCut_player): roundManager.health_player += 1
+	if (!roundManager.wireIsCut_player && !overriding_medicine): roundManager.health_player += 1
+	if (overriding_medicine && !roundManager.wireIsCut_player): 
+		if(overriding_medicine_adding): roundManager.health_player += 2
 	if (roundManager.health_player > maxHealth): roundManager.health_player = maxHealth
 	var newhealth = roundManager.health_player
 	if (newhealth != prevhealth): changingHealth = true
+	if (overriding_medicine && !overriding_medicine_adding): changingHealth = true
 	UpdateDisplayRoutineCigarette_Main(changingHealth, false)
 	pass
 
@@ -151,7 +164,11 @@ func UpdateDisplayRoutineCigarette_Main(isChanging : bool, isAddingEnemy : bool)
 		defibCutter.BlipError("player")
 		playingsound = false
 	UpdateDisplay()
-	if (isChanging && playingsound): speaker_beep.play()
+	if (!overriding_medicine):
+		if (isChanging && playingsound): speaker_beep.play()
+	else:
+		if (isChanging && overriding_medicine_adding): speaker_beep.play()
+		else: if(isChanging && !overriding_medicine_adding): speaker_noise.play()
 	await get_tree().create_timer(.7, false).timeout
 	if (!isAddingEnemy): 
 		camera.BeginLerp("home")
@@ -159,7 +176,7 @@ func UpdateDisplayRoutineCigarette_Main(isChanging : bool, isAddingEnemy : bool)
 	else: 
 		camera.BeginLerp("enemy")
 		animator_dealerHands.play("RESET")
-	pass
+	overriding_medicine = false
 
 func SwapSkullSymbols():
 	for sym in skullSymbols:

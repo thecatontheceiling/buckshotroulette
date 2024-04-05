@@ -3,6 +3,7 @@ class_name DecisionTextManager extends Node
 @export var textArray : Array[TextInteraction]
 @export var colliderArray : Array[StaticBody3D]
 @export var animator : AnimationPlayer
+@export var uiParent : Control
 
 func _ready():
 	for i in range(colliderArray.size()):
@@ -20,3 +21,4 @@ func SetUI(state : bool):
 			colliderArray[i].collision_layer = 0
 			colliderArray[i].collision_mask = 0
 		animator.play("hide text")
+		uiParent.visible = false

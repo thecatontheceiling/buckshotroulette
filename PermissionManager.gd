@@ -22,6 +22,17 @@ func SetIndicators(state : bool):
 			indicatorArray[i].interactionAllowed = false
 			indicatorArray[i].moving = false
 
+func DisableShotgun():
+	for i in range (interactionBranchArray.size()):
+		if (interactionBranchArray[i].interactionAlias == "shotgun"):
+			interactionBranchArray[i].interactionAllowed = false
+			break
+	for i in range (indicatorArray.size()):
+		if (indicatorArray[i].itemName == "SHOTGUN"):
+			indicatorArray[i].interactionAllowed = false
+			break
+			
+
 func SetInteractionPermissions(state : bool):
 	if (state):
 		for i in range(interactionBranchArray.size()):
@@ -50,7 +61,10 @@ func SetItemInteraction(state : bool):
 				var tempBranch : InteractionBranch = children[i].get_child(1)
 				tempBranch.interactionAllowed = state
 
+@export var inter : ItemInteraction
 func SetStackInvalidIndicators():
+	if (inter.stealing): stackDisabledItemArray_bools[5] = true
+	else: stackDisabledItemArray_bools[5] = false
 	if (roundManager.dealerCuffed): stackDisabledItemArray_bools[4] = true
 	else: stackDisabledItemArray_bools[4] = false
 	if (roundManager.barrelSawedOff): stackDisabledItemArray_bools[0] = true

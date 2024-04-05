@@ -8,17 +8,8 @@ var elapsed = 0
 var from
 var to
 
-
 func _process(delta):
 	LerpTimeScale()
-
-#func _unhandled_input(event):
-#	if (event.is_action_pressed("debug_left")):
-#		moving = false
-#		Engine.time_scale = 1
-#	if (event.is_action_pressed("debug_right")):
-#		moving = false
-#		Engine.time_scale = 10
 
 func BeginTimeScaleLerp(start : float, end : float):
 	moving = false

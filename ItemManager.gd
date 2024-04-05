@@ -2,6 +2,7 @@ class_name ItemManager extends Node
 
 @export var grid : GridIndicator
 @export var cursor : CursorManager
+@export var controller : ControllerManager
 @export var roundManager : RoundManager
 @export var dialogue : Dialogue
 @export var camera : CameraManager
@@ -27,9 +28,15 @@ var gridParentArray_enemy_available : Array[Node3D]
 @export var anim_spook : AnimationPlayer
 @export var speakercontroller_musicmain : SpeakerController
 @export var speaker_god : AudioStreamPlayer2D
+@export var amounts : Amounts
+@export var interaction : ItemInteraction
+@export var btnParent_stealing : Control
+@export var btnparent_ff_stealing : Control
 var itemGrabSoundIndex = 0
 var itemArray_dealer : Array[String]
 var itemArray_instances_dealer : Array[Node3D]
+var itemArray_instances_dealer_previous : Array[Node3D]
+var itemArray_dealer_previous : Array[String]
 var itemArray_player : Array[String]
 var hasBegun = false
 var items_dynamicIndicatorArray : Array[PickupIndicator]
@@ -58,12 +65,33 @@ var temp_interaction
 
 func _ready():
 	playerItemStringArray = []
-	availableItemsToGrabArray_player = availableItemArray
-	availableItemsToGrabArray_dealer = availableItemArray
+	#availableItemsToGrabArray_player = availableItemArray
+	#availableItemsToGrabArray_dealer = availableItemArray
 	ResetDealerGrid()
 
 func _process(delta):
 	LerpItem()
+	CheckTimer()
+	ItemStealTimeout()
+
+@export var btnParent_intake : Control
+@export var btn_intake : Control
+@export var btn_grids : Array[Control]
+func SetIntakeFocus(state : bool):
+	btnParent_intake.visible = true
+	if (state):
+		for grid in btn_grids: grid.visible = false
+		btn_intake.visible = true
+		if (cursor.controller_active): btn_intake.grab_focus()
+		controller.previousFocus = btn_intake
+	else:
+		for grid in btn_grids: grid.visible = true
+		#btn_intake.visible = false
+
+func ClearIntakeFocus():
+	btnParent_intake.visible = false
+	for grid in btn_grids: grid.visible = false
+	btn_intake.visible = false
 
 func ItemClear_Remote():
 	var itemParentChildrenArray = itemSpawnParent.get_children()
@@ -108,7 +136,7 @@ func BeginItemGrabbing():
 	
 	await get_tree().create_timer(.8, false).timeout
 	if (!roundManager.playerData.hasReadItemSwapIntroduction):
-		dialogue.ShowText_ForDuration("LET'S MAKE THIS A LITTLE\nMORE INTERESTING ...", 3)
+		dialogue.ShowText_ForDuration(tr("MORE INTERESTING"), 3)
 		await get_tree().create_timer(3, false).timeout
 		camera.BeginLerp("home")
 		await get_tree().create_timer(.8, false).timeout
@@ -123,9 +151,10 @@ func BeginItemGrabbing():
 	if (!roundManager.playerData.hasReadItemDistributionIntro):
 		var stringIndex = roundManager.roundArray[roundManager.currentRound].numberOfItemsToGrab
 		var string = stringNumberArray[stringIndex]
-		dialogue.ShowText_Forever(string+" ITEMS EACH.")
+		string = str(stringIndex)
+		dialogue.ShowText_Forever(string+" "+tr("ITEMS EACH"))
 		await get_tree().create_timer(2.5, false).timeout
-		dialogue.ShowText_Forever("MORE ITEMS BEFORE\nEVERY LOAD.")
+		dialogue.ShowText_Forever(tr("MORE ITEMS"))
 		await get_tree().create_timer(2.5, false).timeout
 		dialogue.HideText()
 		roundManager.playerData.hasReadItemDistributionIntro = true
@@ -133,12 +162,14 @@ func BeginItemGrabbing():
 	if (!roundManager.playerData.hasReadItemDistributionIntro2 && roundManager.roundArray[roundManager.currentRound].hasIntro2):
 		var stringIndex = roundManager.roundArray[roundManager.currentRound].numberOfItemsToGrab
 		var string = stringNumberArray[stringIndex]
-		dialogue.ShowText_Forever(string+" ITEMS EACH.")
+		string = str(stringIndex)
+		dialogue.ShowText_Forever(string+" "+tr("ITEMS EACH"))
 		await get_tree().create_timer(2.5, false).timeout
 		dialogue.HideText()
 		roundManager.playerData.hasReadItemDistributionIntro2 = true
 	#ALLOW ITEM GRAB
 	cursor.SetCursor(true, true)
+	SetIntakeFocus(true)
 	interaction_intake.interactionAllowed = true
 	pass
 
@@ -147,6 +178,7 @@ func EndItemGrabbing():
 	GridParents(false)
 	interaction_intake.interactionAllowed = false
 	cursor.SetCursor(false, false)
+	ClearIntakeFocus()
 	await get_tree().create_timer(.45, false).timeout
 	comp.CycleCompartment("hide briefcase")
 	await get_tree().create_timer(1, false).timeout
@@ -159,6 +191,7 @@ func EndItemGrabbing():
 func GrabSpook():
 	interaction_intake.interactionAllowed = false
 	cursor.SetCursor(false, false)
+	ClearIntakeFocus()
 	PlayItemGrabSound()
 	speakercontroller_musicmain.SnapVolume(false)
 	speaker_god.play()
@@ -171,9 +204,10 @@ func GrabSpook():
 	speakercontroller_musicmain.FadeIn()
 	await get_tree().create_timer(.8, false).timeout
 	cursor.SetCursor(true, true)
+	SetIntakeFocus(true)
 	interaction_intake.interactionAllowed = true
 
-var randindex = -1
+var randindex = 4
 var spook_counter = 0
 var spook_fired = false
 func GrabItem():
@@ -188,22 +222,30 @@ func GrabItem():
 	PlayItemGrabSound()
 	interaction_intake.interactionAllowed = false
 	var selectedResource : ItemResource
-	if (numberOfCigs_player >= 2):
-		availableItemsToGrabArray_player.erase("cigarettes")
-	else:
-		var hasInArray = false
-		for i in range(availableItemsToGrabArray_player.size()):
-			if (availableItemsToGrabArray_dealer[i] == "cigarettes"):
-				hasInArray = true
-				break
-		if (!hasInArray): availableItemsToGrabArray_player.append("cigarettes")
+	
+	#SET PLAYER AVAILABLE ITEMS ACCORDING TO MAX COUNTS
+	var amountArray : Array[AmountResource] = amounts.array_amounts
+	availableItemsToGrabArray_player = []
+	for res in amountArray:
+		if (res.amount_active == 0): continue
+		if (res.amount_player != res.amount_active):
+			availableItemsToGrabArray_player.append(res.itemName)
+	#for res in amountArray: availableItemsToGrabArray_player.append(res.itemName)
+	
 	randindex = randi_range(0, availableItemsToGrabArray_player.size() - 1)
+	
 	numberOfItemsGrabbed += 1
 	#SPAWN ITEM
 	for i in range(instanceArray.size()):
 		if (availableItemsToGrabArray_player[randindex] == instanceArray[i].itemName):
 			selectedResource = instanceArray[i]
 	var itemInstance = selectedResource.instance.instantiate()
+	
+	for res in amountArray:
+		if (selectedResource.itemName == res.itemName):
+			res.amount_player += 1
+			break
+	
 	activeItem = itemInstance
 	itemSpawnParent.add_child(itemInstance)
 	itemInstance.transform.origin = selectedResource.pos_inBriefcase
@@ -231,13 +273,21 @@ func GrabItem():
 	moving = true
 	await get_tree().create_timer(lerpDuration - .2, false).timeout
 	if (!roundManager.playerData.indicatorShown): grid.ShowGridIndicator()
+	
 	if (numberOfOccupiedGrids != 8):
+		
 		GridParents(true)
+		SetIntakeFocus(false)
 	else:
 		#NOT ENOUGH SPACE. PUT ITEM BACK AND END ITEM GRABBING
-		dialogue.ShowText_Forever("OUT OF SPACE.")
+		for res in amountArray:
+			if (selectedResource.itemName == res.itemName):
+				res.amount_player -= 1
+				break
+		
+		dialogue.ShowText_Forever(tr("NO SPACE"))
 		await get_tree().create_timer(1.8, false).timeout
-		dialogue.ShowText_Forever("HOW UNFORTUNATE ...")
+		dialogue.ShowText_Forever(tr("UNFORTUNATE"))
 		await get_tree().create_timer(2.2, false).timeout
 		dialogue.HideText()
 		pos_current = activeItem.transform.origin
@@ -247,6 +297,7 @@ func GrabItem():
 		elapsed = 0
 		moving = true
 		cursor.SetCursor(false, false)
+		ClearIntakeFocus()
 		PlayItemGrabSound()
 		await get_tree().create_timer(lerpDuration, false).timeout
 		moving = false
@@ -258,14 +309,14 @@ func PlaceDownItem(gridIndex : int):
 	numberOfOccupiedGrids += 1
 	gridOccupiedArray[gridIndex] = true
 	moving = false
-	#activeItem.get_parent().remove_child(activeItem)
-	#gridParentArray[gridIndex].add_child(activeItem)
 	var temp_indicator = activeItem.get_child(0)
 	if (temp_interaction.itemName == "cigarettes"): numberOfCigs_player += 1
 	pos_current = activeItem.transform.origin
 	rot_current = activeItem.rotation_degrees
 	pos_next = gridParentArray[gridIndex].transform.origin + activeItem_offset_pos
 	rot_next = gridParentArray[gridIndex].rotation_degrees + activeItem_offset_rot
+	temp_interaction.isPlayerSide = true
+	temp_indicator.dealerGridIndex = gridIndex + 8
 	elapsed = 0
 	moving = true
 	temp_interaction.itemGridIndex = gridIndex
@@ -281,8 +332,10 @@ func PlaceDownItem(gridIndex : int):
 	else:
 		#GRAB NEXT ITEM
 		GridParents(false)
+		ClearIntakeFocus()
 		await get_tree().create_timer(lerpDuration, false).timeout
 		interaction_intake.interactionAllowed = true
+		SetIntakeFocus(true)
 	pass
 
 var firstItem = true
@@ -290,33 +343,39 @@ func GrabItems_Enemy():
 	var selectedResource
 	for i in range(roundManager.roundArray[roundManager.currentRound].numberOfItemsToGrab):
 		if (numberOfItemsGrabbed_enemy != 8):
-			if (numberOfCigs_dealer >= 2):
-				availableItemsToGrabArray_dealer.erase("cigarettes")
-			else:
-				var hasInArray = false
-				for k in range(availableItemsToGrabArray_dealer.size()):
-					if (availableItemsToGrabArray_dealer[k] == "cigarettes"):
-						hasInArray = true
-						break
-				if (!hasInArray): availableItemsToGrabArray_dealer.append("cigarettes")
 			
+			var amountArray : Array[AmountResource] = amounts.array_amounts
+			availableItemsToGrabArray_dealer = []
+			for res in amountArray:
+				if (res.amount_active == 0): 
+					continue
+				if (res.amount_dealer != res.amount_active):
+					availableItemsToGrabArray_dealer.append(res.itemName)
 			var randindex = randi_range(0, availableItemsToGrabArray_dealer.size() - 1)
+			var selectedItem = availableItemsToGrabArray_dealer[randindex]
+			
 			#SPAWN ITEM
 			for c in range(instanceArray_dealer.size()):
-				if (availableItemArray[randindex] == instanceArray_dealer[c].itemName):
+				if (selectedItem == instanceArray_dealer[c].itemName):
 					selectedResource = instanceArray_dealer[c]
 					#ADD STRING TO DEALER ITEM ARRAY
-					itemArray_dealer.append(instanceArray_dealer[c].itemName)
+					itemArray_dealer.append(instanceArray_dealer[c].itemName.to_lower())
+					break
 			var itemInstance = selectedResource.instance.instantiate()
 			var temp_itemIndicator = itemInstance.get_child(0)
 			temp_itemIndicator.isDealerItem = true
+			for res in amountArray:
+				if (selectedResource.itemName == res.itemName):
+					res.amount_dealer += 1
+					break
+			
 			#ADD INSTANCE TO DEALER ITEM ARRAY (mida vittu this code is getting out of hand)
 			itemArray_instances_dealer.append(itemInstance)
 			activeItem_enemy = itemInstance
 			itemSpawnParent.add_child(activeItem_enemy)
+			
 			#PLACE ITEM ON RANDOM GRID
 			var randgrid = randi_range(0, gridParentArray_enemy_available.size() - 1)
-			#higher than z0 is right
 			var gridname = gridParentArray_enemy_available[randgrid]
 			activeItem_enemy.transform.origin = gridParentArray_enemy_available[randgrid].transform.origin + selectedResource.pos_offset
 			activeItem_enemy.rotation_degrees = gridParentArray_enemy_available[randgrid].rotation_degrees + selectedResource.rot_offset
@@ -327,13 +386,92 @@ func GrabItems_Enemy():
 			if (activeItem_enemy.get_child(1).itemName == "cigarettes"): numberOfCigs_dealer += 1
 			gridParentArray_enemy_available.erase(gridname)
 			numberOfItemsGrabbed_enemy += 1
-		pass
-	pass
 
-func UseItem_Dealer(itemName : String):
-	match (itemName):
-		"beer":
-			pass
+
+var PREVIOUS_items_dyanmicIndicatorArray : Array[PickupIndicator]
+var PREVIOUS_items_dynamicInteractionArray : Array[InteractionBranch]
+func SetupItemSteal():
+	PREVIOUS_items_dyanmicIndicatorArray = []
+	PREVIOUS_items_dynamicInteractionArray = []
+	PREVIOUS_items_dyanmicIndicatorArray = items_dynamicIndicatorArray
+	PREVIOUS_items_dynamicInteractionArray = items_dynamicInteractionArray
+	items_dynamicIndicatorArray = []
+	items_dynamicInteractionArray = []
+	interaction.pos_hand = interaction.pos_hand_stealing
+	interaction.rot_hand = interaction.rot_hand_stealing
+	
+	interaction.stealing = true
+	
+	var ch = itemSpawnParent.get_children()
+	for c in ch.size():
+		if(ch[c].get_child(0) is PickupIndicator):
+			var temp_indicator : PickupIndicator = ch[c].get_child(0)
+			var temp_interaction : InteractionBranch = ch[c].get_child(1)
+			items_dynamicIndicatorArray.append(temp_indicator)
+			items_dynamicInteractionArray.append(temp_interaction)
+	
+	camera.BeginLerp("enemy items")
+	await get_tree().create_timer(.7, false).timeout
+	interaction.stealing_fs = true
+	interaction.EnablePermissions()
+	interaction.DisableShotgun()
+	roundManager.ClearDeskUI(true)
+	btnParent_stealing.visible = true
+	if (cursor.controller_active): btnparent_ff_stealing.grab_focus()
+	controller.previousFocus = btnparent_ff_stealing
+	for c in ch.size():
+		if(ch[c].get_child(0) is PickupIndicator):
+			var temp_indicator : PickupIndicator = ch[c].get_child(0)
+			var temp_interaction : InteractionBranch = ch[c].get_child(1)
+	Counter(true)
+
+func RevertItemSteal(): 
+	btnParent_stealing.visible = false
+	items_dynamicIndicatorArray = PREVIOUS_items_dyanmicIndicatorArray
+	items_dynamicInteractionArray = PREVIOUS_items_dynamicInteractionArray
+
+func RevertItemSteal_Timeout():
+	btnParent_stealing.visible = false
+	interaction.stealing = false
+	interaction.DisablePermissions()
+	items_dynamicIndicatorArray = PREVIOUS_items_dyanmicIndicatorArray
+	items_dynamicInteractionArray = PREVIOUS_items_dynamicInteractionArray
+	var ch = itemSpawnParent.get_children()
+	for c in ch.size():
+		if(ch[c].get_child(0) is PickupIndicator):
+			var temp_indicator : PickupIndicator = ch[c].get_child(0)
+			temp_indicator.Revert()
+	camera.BeginLerp("home")
+	await get_tree().create_timer(.4, false).timeout
+	interaction.stealing_fs = false
+	interaction.pos_hand = interaction.pos_hand_main
+	interaction.rot_hand = interaction.rot_hand_main
+	interaction.EnablePermissions()
+
+func Counter(starting : bool):
+	if (starting):
+		timer_steal_current = 0
+		counting = true
+		checking = true
+		fs = false
+	else:
+		timer_steal_current = 0
+		counting = false
+		checking = false
+		fs = true
+
+var timer_steal_current = 0.0
+var timer_steal_max = 7.0
+var counting = false
+var checking = false
+func ItemStealTimeout():
+	if (counting): timer_steal_current += get_process_delta_time()
+
+var fs = false
+func CheckTimer():
+	if ((timer_steal_current > timer_steal_max) && checking && !fs):
+		RevertItemSteal_Timeout()
+		fs = true
 	pass
 
 func ResetDealerGrid():
@@ -399,6 +537,11 @@ func ClearAllItems():
 	for i in range (instancesToDelete.size()):
 		instancesToDelete[i].queue_free()
 	itemArray_instances_dealer = []
+	
+	var amountArray : Array[AmountResource] = amounts.array_amounts
+	for res in amountArray:
+		res.amount_dealer = 0
+		res.amount_player = 0
 
 func GridParents(setState : bool):
 	if (setState):
@@ -415,7 +558,6 @@ func PlayItemGrabSound():
 	speaker_itemgrab.play()
 	if (itemGrabSoundIndex != soundArray_itemGrab.size() - 1): itemGrabSoundIndex += 1
 	else: itemGrabSoundIndex = 0
-	pass
 
 func LerpItem():
 	if (moving):
@@ -426,8 +568,6 @@ func LerpItem():
 		var rot = lerp(rot_current, rot_next, c)
 		activeItem.transform.origin = pos
 		activeItem.rotation_degrees = rot
-
-
 
 
 

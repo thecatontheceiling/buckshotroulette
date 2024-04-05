@@ -41,7 +41,10 @@ func LoadShells():
 	if (roundManager.playerData.numberOfDialogueRead < 3):	
 		if (diaindex == loadingDialogues.size()):
 			diaindex = 0
-		dialogue.ShowText_ForDuration(loadingDialogues[diaindex], 3)
+		var stringshow
+		if (diaindex == 0): stringshow = tr("SHELL INSERT1")
+		if (diaindex == 1): stringshow = tr("SHELL INSERT2")
+		dialogue.ShowText_ForDuration(stringshow, 3)
 		diaindex += 1
 		await get_tree().create_timer(3, false).timeout
 		roundManager.playerData.numberOfDialogueRead += 1
@@ -86,9 +89,11 @@ func LoadShells():
 	DealerHandsDropShotgun()
 	camera.BeginLerp("home")
 	#ALLOW INTERACTION
+	roundManager.playerCurrentTurnItemArray = []
 	await get_tree().create_timer(.6, false).timeout
 	perm.SetStackInvalidIndicators()
 	cursor.SetCursor(true, true)
 	perm.SetIndicators(true)
 	perm.SetInteractionPermissions(true)
+	roundManager.SetupDeskUI()
 	pass

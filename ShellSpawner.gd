@@ -12,6 +12,7 @@ class_name ShellSpawner extends Node
 @export var speaker_latchOpen : AudioStreamPlayer2D
 @export var speaker_audioIndicator : AudioStreamPlayer2D
 @export var soundArray_indicators : Array[AudioStream]
+@export var ai : DealerIntelligence
 
 var spawnedShell
 var locationIndex
@@ -59,17 +60,19 @@ func MainShellRoutine():
 	#DIALOGUE
 	var text_lives
 	var text_blanks
-	if (temp_live == 1): text_lives = "LIVE ROUND."
-	else: text_lives = "LIVE ROUNDS."
-	if (temp_blank == 1): text_blanks = "BLANK."
-	else: text_blanks = "BLANKS."
+	if (temp_live == 1): text_lives = tr("LIVEROUND")
+	else: text_lives = tr("LIVEROUNDS")
+	if (temp_blank == 1): text_blanks = tr("BLANKROUND")
+	else: text_blanks = tr("BLANKROUNDS")
 	var finalstring : String = str(temp_live) + " " + text_lives + " " + str(temp_blank) + " " + text_blanks
 	var maindur = 1.3
 	if (roundManager.playerData.currentBatchIndex == 2):
 		roundManager.playerData.skippingShellDescription = true
-	if (!roundManager.playerData.skippingShellDescription): dialogue.ShowText_Forever(finalstring)
+	if (!roundManager.playerData.skippingShellDescription): 
+		if (CheckBackdropScaling()): dialogue.scaling = true
+		dialogue.ShowText_Forever(finalstring)
 	if (roundManager.playerData.skippingShellDescription && !skipDialoguePresented):
-		dialogue.ShowText_Forever("YOU KNOW THE DRILL.")
+		dialogue.ShowText_Forever(tr("DRILL"))
 		maindur = 2.5
 		skipDialoguePresented = true
 	if(!roundManager.playerData.skippingShellDescription): await get_tree().create_timer(2.5, false).timeout
@@ -88,6 +91,14 @@ func MainShellRoutine():
 	return
 	pass
 
+func CheckBackdropScaling():
+	var curloc = TranslationServer.get_locale()
+	var localesToScale = ["FR", "IT", "DE", "ES", "ES LATAM", "BR", "PT"]
+	for l in localesToScale:
+		if (curloc == l):
+			return true
+	return false
+
 func SpawnShells(numberOfShells : int, numberOfLives : int, numberOfBlanks : int, shufflingArray : bool):
 	#DELETE PREVIOUS SHELLS
 	for i in range(spawnedShellObjectArray.size()):
@@ -97,6 +108,7 @@ func SpawnShells(numberOfShells : int, numberOfLives : int, numberOfBlanks : int
 	#SETUP SHELL ARRAY
 	sequenceArray = []
 	tempSequence = []
+	ai.sequenceArray_knownShell = []
 	for i in range(numberOfLives):
 		tempSequence.append("live")
 	for i in range(numberOfBlanks):
@@ -105,6 +117,7 @@ func SpawnShells(numberOfShells : int, numberOfLives : int, numberOfBlanks : int
 		tempSequence.shuffle()
 	for i in range(tempSequence.size()):
 		sequenceArray.append(tempSequence[i])
+		ai.sequenceArray_knownShell.append(false)
 		pass
 	
 	locationIndex = 0

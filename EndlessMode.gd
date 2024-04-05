@@ -4,6 +4,7 @@ class_name Endless extends Node
 @export var smokerdude : Node3D
 @export var display : StandardMaterial3D
 @export var displayrounds : CompressedTexture2D
+@export var amounts : Amounts
 
 func SetupEndless():
 	smokerdude.visible = false
@@ -20,3 +21,5 @@ func SetupEndless():
 	roundManager.shellSpawner.skipDialoguePresented = true
 	roundManager.shellLoadingSpedUp = true
 	display.albedo_texture = displayrounds
+	for res in amounts.array_amounts:
+		res.amount_active = res.amount_don

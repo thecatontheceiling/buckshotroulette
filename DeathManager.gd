@@ -1,5 +1,6 @@
 class_name DeathManager extends Node
 
+@export var cam : CameraManager
 @export var viewblocker : ColorRect
 @export var speakersToDisable : Array[SpeakerController]
 @export var animator_playerDefib : AnimationPlayer
@@ -21,6 +22,7 @@ class_name DeathManager extends Node
 @export var filter : FilterController
 @export var animator_pp : AnimationPlayer
 @export var speaker_heartbeat : AudioStreamPlayer2D
+@export var rm : RoundManager
 
 func _ready():
 	defibParent.visible = false
@@ -109,9 +111,36 @@ func Kill(who : String, trueDeath : bool, returningShotgun : bool):
 				await get_tree().create_timer(2, false).timeout
 				if (dealerKilledSelf): dealerAI.EndDealerTurn(dealerAI.dealerCanGoAgain)
 
+func MedicineDeath():
+	viewblocker.visible = true
+	cam.cam.rotation_degrees = Vector3(cam.cam.rotation_degrees.x, cam.cam.rotation_degrees.y, 0)
+	DisableSpeakers()
+	if (shotgunShooting.roundManager.health_player == 0):
+		shotgunShooting.roundManager.OutOfHealth("player")
+		return
+	await get_tree().create_timer(.4, false).timeout
+	speaker_playerDefib.play()
+	await get_tree().create_timer(.85, false).timeout
+	speaker_heartbeat.play()
+	animator_pp.play("revival brightness")
+	defibParent.visible = true
+	animator_playerDefib.play("RESET")
+	viewblocker.visible = false
+	filter.BeginPan(filter.lowPassMaxValue, filter.lowPassDefaultValue)
+	FadeInSpeakers()
+	cameraShaker.Shake()
+	await get_tree().create_timer(.6, false).timeout
+	animator_playerDefib.play("remove defib device")
+	await get_tree().create_timer(.4, false).timeout
+	#await(healthCounter.UpdateDisplayRoutine(false, !shotgunShooting.playerCanGoAgain, false))
+	defibParent.visible = false
+
+@export var ach : Achievement
 func MainDeathRoutine():
 	var loadingHeaven = false
 	if (shotgunShooting.roundManager.endless):
+		if (rm.endscore != null):
+			if (rm.endscore > 1000000): ach.UnlockAchievement("ach10")
 		await get_tree().create_timer(.5, false).timeout
 		get_tree().change_scene_to_file("res://scenes/death.tscn")
 		return
@@ -119,7 +148,7 @@ func MainDeathRoutine():
 		shotgunShooting.roundManager.playerData.enteringFromTrueDeath = true
 		loadingHeaven = true
 	shotgunShooting.roundManager.playerData.playerEnteringFromDeath = true
-	savefile.SaveGame()
+	await(savefile.SaveGame())
 	await get_tree().create_timer(.5, false).timeout
 	if (!loadingHeaven): get_tree().change_scene_to_file("res://scenes/death.tscn")
 	else: get_tree().change_scene_to_file("res://scenes/heaven.tscn")

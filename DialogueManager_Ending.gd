@@ -26,10 +26,12 @@ func HideText():
 	dialogueUI.visible = false
 	pass
 
+var overriding = false
 func TickText():
 	while(looping):
 		dialogueUI.visible_characters += 1
-		speaker_click.pitch_scale = randf_range(.8, 1)
+		if (!overriding): speaker_click.pitch_scale = randf_range(.8, 1)
+		else: speaker_click.pitch_scale = randf_range(.2, .4)
 		speaker_click.play()
 		if (dialogueUI.visible_ratio >= 1):
 			looping = false

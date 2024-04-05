@@ -9,6 +9,7 @@ class_name ShellEjectManager extends Node
 @export var animator_fader : AnimationPlayer
 @export var isDealerSide : bool
 @export var smoke : SmokeController
+@export var ai : DealerIntelligence
 
 var hasFaded = false
 
@@ -26,6 +27,7 @@ func EjectShell():
 	if (shellSpawner.sequenceArray[0] == "live"):
 		smoke.SpawnSmoke("chamber")
 	shellSpawner.sequenceArray.remove_at(0)
+	ai.sequenceArray_knownShell.remove_at(0)
 	hasFaded = false
 	pass
 
@@ -37,6 +39,7 @@ func BeerEjection_player():
 	mesh.visible = true
 	animator.play("ejecting shell_player1")
 	shellSpawner.sequenceArray.remove_at(0)
+	ai.sequenceArray_knownShell.remove_at(0)
 	hasFaded = false
 	pass
 
@@ -48,6 +51,7 @@ func BeerEjection_dealer():
 	mesh.visible = true
 	animator.play("eject shell beer")
 	shellSpawner.sequenceArray.remove_at(0)
+	ai.sequenceArray_knownShell.remove_at(0)
 	hasFaded = false
 	pass
 
@@ -61,6 +65,7 @@ func DeathEjection():
 	if (shellSpawner.sequenceArray[0] == "live"):
 		smoke.SpawnSmoke("chamber")
 	shellSpawner.sequenceArray.remove_at(0)
+	ai.sequenceArray_knownShell.remove_at(0)
 	hasFaded = false
 	pass
 

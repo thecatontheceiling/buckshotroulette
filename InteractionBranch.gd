@@ -5,10 +5,12 @@ class_name InteractionBranch extends Node
 @export var interactionAllowed : bool
 @export var isGrid : bool
 @export var gridIndex : int
+@export var isPlayerSide : bool
 @export var itemGridIndex : int
 @export var interactionInvalid : bool
 @export var signatureButton_letterAlias : String
 @export var signatureButton_specialAlias : String
+@export var crtButton_alias : String
 @export var assignedSignatureButton : SignButton
 
 func _ready():

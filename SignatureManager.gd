@@ -19,6 +19,10 @@ class_name Signature extends Node
 @export var speaker_shutdown : AudioStreamPlayer2D
 @export var speaker_keypress : AudioStreamPlayer2D
 @export var speaker_punch : AudioStreamPlayer2D
+@export var btn_waiver : Control
+@export var btnParent_signature : Control
+@export var btn_signature_a : Control
+@export var controller : ControllerManager
 
 var fullstring = ""
 var lettercount = 0
@@ -51,11 +55,15 @@ func AwaitPickup():
 	await get_tree().create_timer(.6, false).timeout
 	cursor.SetCursor(true, true)
 	intrbranch_waiver.interactionAllowed = true
+	btn_waiver.visible = true
+	if (cursor.controller_active): btn_waiver.grab_focus()
+	controller.previousFocus = btn_waiver
 
 func PickUpWaiver():
 	speaker_bootup.play()
 	parent_signatureMachineMainParent.visible = true
 	intrbranch_waiver.interactionAllowed = false
+	btn_waiver.visible = false
 	cursor.SetCursor(false, false)
 	anim_waiver.play("pickup waiver")
 	for letter in letterArray: letter.text = ""
@@ -66,6 +74,9 @@ func PickUpWaiver():
 	await get_tree().create_timer(2.77, false).timeout #.9 anim speed
 	for intbr in intbranches : intbr.interactionAllowed = true
 	cursor.SetCursor(true, true)
+	btnParent_signature.visible = true
+	if (cursor.controller_active): btn_signature_a.grab_focus()
+	controller.previousFocus = btn_signature_a
 
 func GetInput(letterAlias : String, specialAlias : String):
 	speaker_keypress.pitch_scale = randf_range(.95, 1)
@@ -88,6 +99,7 @@ func Input_Letter(alias : String):
 	UpdateLEDArray()
 	pass
 
+@export var ach : Achievement
 func Input_Enter():
 	var chararray = []
 	fullstring = ""
@@ -98,7 +110,9 @@ func Input_Enter():
 	lettercount = chararray.size()
 	if (fullstring == ""): return
 	if (fullstring == "dealer"): return
-	if (fullstring == "god"): return
+	if (fullstring == "god"): 
+		ach.UnlockAchievement("ach11")
+		return
 	if (fullstring != ""):
 		for br in intbranches:
 			var el = br.get_parent().get_child(2)
@@ -106,6 +120,7 @@ func Input_Enter():
 			el.set_collision_layer_value(1, false)
 			el.set_collision_mask_value(1, false)
 	cursor.SetCursor(false, false)
+	btnParent_signature.visible = false
 	await get_tree().create_timer(.25, false).timeout
 	for i in range(lettercount):
 		letterArray_signature_joined[i].text = chararray[i].to_upper()
@@ -114,12 +129,13 @@ func Input_Enter():
 		await get_tree().create_timer(.17, false).timeout
 		speaker_punch.pitch_scale = randf_range(.95, 1)
 		speaker_punch.play()
+	roundManager.counting = true
 	await get_tree().create_timer(.17, false).timeout
 	parent_shotgun.transform.origin = origpos_shotgun
 	anim_waiver.play("put away waiver")
 	speaker_bootup.stop()
 	speaker_shutdown.play()
-	roundManager.playerData.playername = fullstring
+	roundManager.playerData.playername = " " + fullstring
 	roundManager.playerData.hasSignedWaiver = true
 	ReturnToMainBatch()
 	await get_tree().create_timer(1.72, false).timeout

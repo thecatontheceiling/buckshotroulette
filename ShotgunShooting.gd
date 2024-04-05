@@ -26,10 +26,15 @@ class_name ShotgunShooting extends Node
 @export var mat_splatter : GeometryInstance3D
 @export var speaker_splatter : AudioStreamPlayer2D
 @export var anim_splatter : AnimationPlayer
+@export var ach : Achievement
 
 var playerCanGoAgain
 
+@export var btnParent_shootingChoice : Control
+@export var btn_you : Control
+@export var controller : ControllerManager
 func GrabShotgun():
+	roundManager.ClearDeskUI(true)
 	perm.SetIndicators(false)
 	perm.SetInteractionPermissions(false)
 	perm.RevertDescriptionUI()
@@ -37,6 +42,9 @@ func GrabShotgun():
 	animator_shotgun.play("player grab shotgun")
 	shotgunshaker.StartShaking()
 	decisionText.SetUI(true)
+	btnParent_shootingChoice.visible = true
+	if (cursorManager.controller_active): btn_you.grab_focus()
+	controller.previousFocus = btn_you
 	await get_tree().create_timer(.5, false).timeout
 
 var disablingDelayShit = false
@@ -112,6 +120,8 @@ func Shoot(who : String):
 		roundManager.health_opponent -= roundManager.currentShotgunDamage
 		if (roundManager.health_opponent < 0): roundManager.health_opponent = 0
 	if (currentRoundInChamber == "live" && who == "self"): 
+		CheckAchievement_why()
+		CheckAchievement_style()
 		roundManager.waitingForHealthCheck2 = true
 		if (shellSpawner.sequenceArray.size() == 1): 
 			whatTheFuck = true
@@ -123,7 +133,9 @@ func Shoot(who : String):
 		playerCanGoAgain = false
 		healthCounter.checkingPlayer = true
 		await(death.Kill("player", false, true))
-	if (currentRoundInChamber == "blank" && who == "self"): playerCanGoAgain = true
+	if (currentRoundInChamber == "blank" && who == "self"): 
+		playerCanGoAgain = true
+		CheckAchievement_coinflip()
 	if (currentRoundInChamber == "live" && who == "dealer"): 
 		playerCanGoAgain = false
 		dealerShot = true
@@ -179,6 +191,17 @@ func FinalizeShooting(playerCanGoAgain : bool, placeShotgunOnTable : bool, waitF
 			await get_tree().create_timer(2, false).timeout
 	if(roundManager.health_opponent != 0): roundManager.EndTurn(playerCanGoAgain)
 
+func CheckAchievement_coinflip():
+	var setting = false
+	if ("magnifying glass" not in roundManager.playerCurrentTurnItemArray and "burner phone" not in roundManager.playerCurrentTurnItemArray): setting = true
+	if ((shellSpawner.sequenceArray.count("live") == shellSpawner.sequenceArray.count("blank")) && setting): ach.UnlockAchievement("ach8")
+
+func CheckAchievement_why():
+	if ("magnifying glass" in roundManager.playerCurrentTurnItemArray): ach.UnlockAchievement("ach13")
+
+func CheckAchievement_style():
+	if ("handsaw" in roundManager.playerCurrentTurnItemArray): ach.UnlockAchievement("ach15")
+
 func PlayShootingSound():
 	var currentRoundInChamber = shellSpawner.sequenceArray[0]
 	if (currentRoundInChamber == "live"):
@@ -187,7 +210,8 @@ func PlayShootingSound():
 		roundManager.playerData.stat_shotsFired += 1
 		animator_muzzleFlash.play("muzzle flash fire")
 		animator_muzzleFlash_model.play("fire")
-	else: speaker_blank.play()
+	else: 
+		speaker_blank.play()
 	pass
 
 var fired = false
