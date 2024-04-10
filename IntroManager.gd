@@ -271,7 +271,9 @@ func RevertCRT():
 	if (cursor.controller_active): btn_bathroomdoor.grab_focus()
 	controller.previousFocus = btn_bathroomdoor
 
+@export var statue : Statue
 func Interaction_BackroomDoor():
+	statue.CheckStatus()
 	roundManager.playerData.stat_doorsKicked += 1
 	animator_camera.play("camera enter backroom")
 	intbranch_backroomdoor.interactionAllowed = false
@@ -315,6 +317,8 @@ func KickDoorLobby():
 	filter.BeginPan(filter.lowPassDefaultValue, filter.lowPassMaxValue)
 	speaker_amb_restroom.stop()
 
+@export var pipeline : PipelineManager
 func RestRoomIdle():
+	pipeline.AdjustSettings(pipeline.scene)
 	animator_camera.play("camera idle bathroom")
 	pass

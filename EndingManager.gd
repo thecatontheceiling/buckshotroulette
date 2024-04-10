@@ -36,7 +36,7 @@ var waitingForInput = false
 #			ExitGame()
 #			waitingForInput = false
 
-func _unhandled_key_input(event):
+func _unhandled_input(event):
 	if (event.is_pressed()):
 		if (waitingForInput): 
 			ExitGame()
@@ -100,6 +100,7 @@ func ExitGame():
 	await get_tree().create_timer(4, false).timeout
 	var unlocked = FileAccess.file_exists(unlocker.savepath)
 	if (unlocked): 
+		print("changing scene to: menu")
 		get_tree().change_scene_to_file("res://scenes/menu.tscn")
 		return
 	else:

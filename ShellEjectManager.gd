@@ -15,6 +15,8 @@ var hasFaded = false
 
 func _ready():
 	mesh.set_surface_override_material(0, mat_brass)
+	if (GlobalVariables.colorblind): mat_live.albedo_color = GlobalVariables.colorblind_color_live; mat_blank.albedo_color = GlobalVariables.colorblind_color_blank
+	else: mat_live.albedo_color = GlobalVariables.default_color_live; mat_blank.albedo_color = GlobalVariables.default_color_blank
 
 func EjectShell():
 	shellSpawner.roundManager.playerData.stat_shellsEjected += 1

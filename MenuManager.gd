@@ -21,6 +21,7 @@ class_name MenuManager extends Node
 @export var controller : ControllerManager
 @export var mouseblocker : Control
 @export var anim_creds : AnimationPlayer
+@export var version : Label
 
 func _ready():
 	Show("main")
@@ -47,6 +48,9 @@ func _ready():
 	buttons_options[3].connect("is_pressed", SetWindowed)
 	buttons_options[4].connect("is_pressed", ControllerEnable)
 	buttons_options[5].connect("is_pressed", ControllerDisable)
+	buttons_options[6].connect("is_pressed", ToggleColorblind)
+	
+	version.text = GlobalVariables.currentVersion
 	
 	Intro()
 
@@ -128,6 +132,7 @@ func Show(what : String):
 		controller.previousFocus = focus
 
 func ReturnToLastScreen():
+	print("return to last screen")
 	if (currentScreen) == "sub options": lastScreen = "main"
 	if (currentScreen) == "rebind controls": lastScreen = "sub options"
 	if (currentScreen == "audio video" or currentScreen == "language" or currentScreen == "controller" or currentScreen == "rebind controls"): optionmanager.SaveSettings()
@@ -152,6 +157,7 @@ func Start():
 	cursor.SetCursor(false, false)
 	savefile.ClearSave()
 	await get_tree().create_timer(4, false).timeout
+	print("changing scene to: main")
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 func Credits():
@@ -171,6 +177,8 @@ func ResetControls():
 	optionmanager.ResetControls()
 	ResetButtons()
 
+func ToggleColorblind():
+	optionmanager.ToggleColorblind()
 func DiscordLink():
 	OS.shell_open("https://discord.gg/cr-channel-1158444754325999747")
 func RebindControls():

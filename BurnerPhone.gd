@@ -13,8 +13,8 @@ func SendDialogue():
 	if (len != 1):
 		randindex = randi_range(1, len - 1)
 		if(randindex == 8): randindex -= 1
-		if (sequence[randindex] == "blank"): secondpart = tr("BLANKROUND")
-		else: secondpart = tr("LIVEROUND")
+		if (sequence[randindex] == "blank"): secondpart = tr("BLANKROUND") % ""
+		else: secondpart = tr("LIVEROUND") % ""
 		match (randindex):
 			1:
 				firstpart = tr("SEQUENCE2")

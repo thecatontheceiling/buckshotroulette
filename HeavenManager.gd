@@ -45,6 +45,7 @@ func Button_Main(tag : String):
 	await get_tree().create_timer(3.12, false).timeout
 	match tag:
 		"retry":
+			print("changing scene to: death")
 			get_tree().change_scene_to_file("res://scenes/death.tscn")
 		"exit":
 			get_tree().quit()

@@ -12,6 +12,7 @@ func _ready():
 	pass
 
 func SaveGame():
+	print("attempting to save game")
 	data = {
 		"has_read_introduction": roundManager.playerData.hasReadIntroduction,
 		"has_read_item_swap_introduction": roundManager.playerData.hasReadItemSwapIntroduction,
@@ -39,9 +40,12 @@ func SaveGame():
 	var file = FileAccess.open(savePath, FileAccess.WRITE)
 	file.store_var(data)
 	file.close()
+	print("save file closed")
+	print("user save file dictionary: ", data)
 
 func LoadGame():
 	if (FileAccess.file_exists(savePath)):
+		print("attempting to load save file")
 		var file = FileAccess.open(savePath, FileAccess.READ)
 		data = file.get_var()
 		roundManager.playerData.hasReadIntroduction = data.has_read_introduction
@@ -67,6 +71,10 @@ func LoadGame():
 		roundManager.playerData.stat_cigSmoked = data.stat_cigSmoked
 		roundManager.playerData.stat_beerDrank = data.stat_beerDrank
 		file.close()
+		print("closing save file")
+		print("loaded data dictionary: ", data)
+	else: print("user does not have save file")
 
 func ClearSave():
+	print("clearing save file")
 	if (FileAccess.file_exists(savePath)): DirAccess.remove_absolute(savePath)

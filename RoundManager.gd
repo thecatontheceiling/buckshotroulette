@@ -60,6 +60,7 @@ var trueDeathActive = false
 var playerCurrentTurnItemArray = []
 
 func _ready():
+	Engine.time_scale = 1
 	HideDealer()
 	#await get_tree().create_timer(.2, false).timeout
 	pass
@@ -137,10 +138,12 @@ func ParseMainGameAmounts():
 	for res in amounts.array_amounts:
 		res.amount_active = res.amount_main
 
+var curhealth = 0
 func GenerateRandomBatches():
 	for b in batchArray:
 		for i in range(b.roundArray.size()):
 			b.roundArray[i].startingHealth = randi_range(2, 4)
+			curhealth = b.roundArray[i].startingHealth
 			
 			var total_shells = randi_range(2, 8)
 			var amount_live = max(1, total_shells / 2)
@@ -165,6 +168,7 @@ func SetupRoundArray():
 				pass
 	pass
 
+@export var statue : Statue
 #SHOW ROUND INDICATOR
 func RoundIndicator():
 	roundIndicator.visible = false
@@ -172,6 +176,7 @@ func RoundIndicator():
 	animator_roundIndicator.play("RESET")
 	camera.BeginLerp("health counter")
 	await get_tree().create_timer(.8, false).timeout
+	statue.CheckStatus()
 	var activePos = roundIndicatorPositions[roundArray[0].indicatorNumber]
 	roundIndicator.transform.origin = activePos
 	roundIndicatorParent.visible = true
@@ -337,6 +342,7 @@ func SetupDeskUI():
 	deskUI_shotgun.visible = true
 	if (roundArray[currentRound].usingItems):
 		for b in deskUI_grids: b.visible = true
+	else: for b in deskUI_grids: b.visible = false
 	
 	if (cursor.controller_active): deskUI_shotgun.grab_focus()
 	controller.previousFocus = deskUI_shotgun
@@ -367,7 +373,7 @@ var doubled = false
 
 var lerpingscore = false
 var startscore
-var endscore
+var endscore = 0
 @export var ui_score : Label3D
 @export var ui_doubleornothing : Label3D
 @export var speaker_key : AudioStreamPlayer2D

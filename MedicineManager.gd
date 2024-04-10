@@ -71,5 +71,5 @@ func Perms(d : float):
 
 func GetFlip():
 	var value = randf_range(0.0, 1.0)
-	if (value < .4): return false
+	if (value < .5): return false
 	else: return true

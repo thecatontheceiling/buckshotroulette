@@ -60,11 +60,13 @@ func MainShellRoutine():
 	#DIALOGUE
 	var text_lives
 	var text_blanks
-	if (temp_live == 1): text_lives = tr("LIVEROUND")
-	else: text_lives = tr("LIVEROUNDS")
-	if (temp_blank == 1): text_blanks = tr("BLANKROUND")
-	else: text_blanks = tr("BLANKROUNDS")
-	var finalstring : String = str(temp_live) + " " + text_lives + " " + str(temp_blank) + " " + text_blanks
+	if (temp_live == 1): text_lives = tr("LIVEROUND") % str(temp_live)
+	else: text_lives = tr("LIVEROUNDS") % str(temp_live)
+	if (temp_blank == 1): text_blanks = tr("BLANKROUND") % str(temp_blank)
+	else: text_blanks = tr("BLANKROUNDS") % str(temp_blank)
+	var finalstring : String
+	#finalstring = str(temp_live) + " " + text_lives + " " + str(temp_blank) + " " + text_blanks
+	finalstring = text_lives + " " + text_blanks
 	var maindur = 1.3
 	if (roundManager.playerData.currentBatchIndex == 2):
 		roundManager.playerData.skippingShellDescription = true

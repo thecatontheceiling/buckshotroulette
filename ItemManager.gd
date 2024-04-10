@@ -152,7 +152,7 @@ func BeginItemGrabbing():
 		var stringIndex = roundManager.roundArray[roundManager.currentRound].numberOfItemsToGrab
 		var string = stringNumberArray[stringIndex]
 		string = str(stringIndex)
-		dialogue.ShowText_Forever(string+" "+tr("ITEMS EACH"))
+		dialogue.ShowText_Forever(tr("ITEMS EACH") % string)
 		await get_tree().create_timer(2.5, false).timeout
 		dialogue.ShowText_Forever(tr("MORE ITEMS"))
 		await get_tree().create_timer(2.5, false).timeout
@@ -163,7 +163,7 @@ func BeginItemGrabbing():
 		var stringIndex = roundManager.roundArray[roundManager.currentRound].numberOfItemsToGrab
 		var string = stringNumberArray[stringIndex]
 		string = str(stringIndex)
-		dialogue.ShowText_Forever(string+" "+tr("ITEMS EACH"))
+		dialogue.ShowText_Forever(tr("ITEMS EACH") % string)
 		await get_tree().create_timer(2.5, false).timeout
 		dialogue.HideText()
 		roundManager.playerData.hasReadItemDistributionIntro2 = true
@@ -232,6 +232,8 @@ func GrabItem():
 			availableItemsToGrabArray_player.append(res.itemName)
 	#for res in amountArray: availableItemsToGrabArray_player.append(res.itemName)
 	
+	if (roundManager.currentRound == 0 && roundManager.roundArray[roundManager.currentRound].startingHealth == 2):
+		if ("handsaw" in availableItemsToGrabArray_player): availableItemsToGrabArray_player.erase("handsaw")
 	randindex = randi_range(0, availableItemsToGrabArray_player.size() - 1)
 	
 	numberOfItemsGrabbed += 1
@@ -351,6 +353,10 @@ func GrabItems_Enemy():
 					continue
 				if (res.amount_dealer != res.amount_active):
 					availableItemsToGrabArray_dealer.append(res.itemName)
+			
+			if (roundManager.currentRound == 0 && roundManager.roundArray[roundManager.currentRound].startingHealth == 2):
+				if ("handsaw" in availableItemsToGrabArray_dealer): availableItemsToGrabArray_dealer.erase("handsaw")
+			
 			var randindex = randi_range(0, availableItemsToGrabArray_dealer.size() - 1)
 			var selectedItem = availableItemsToGrabArray_dealer[randindex]
 			

@@ -30,10 +30,10 @@ func _ready():
 func SetUI(state : bool):
 	if (state):
 		if (!is3D): ui.modulate.a = ui_opacity_active
-		else: ui_3D.transparency = 0
+		else: ui_3D.visible = true
 	else:
 		if (!is3D): ui.modulate.a = ui_opacity_inactive
-		else: ui_3D.transparency = 1
+		else: ui_3D.visible = false
 
 func OnHover():
 	if (isActive && mainActive):

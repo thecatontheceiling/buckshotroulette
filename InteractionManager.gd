@@ -41,16 +41,21 @@ func CheckIfHovering():
 	else:
 		cursor.SetCursorImage("point")
 
+var fs_dec = false
 func InteractWith(alias : String):
 	match(alias):
 		"shotgun":
 			shotgun.GrabShotgun()
 		"text dealer":
-			shotgun.Shoot("dealer")
-			decision.SetUI(false)
+			if (!fs_dec):
+				shotgun.Shoot("dealer")
+				decision.SetUI(false)
+				fs_dec = true
 		"text you":
-			shotgun.Shoot("self")
-			decision.SetUI(false)
+			if (!fs_dec):
+				shotgun.Shoot("self")
+				decision.SetUI(false)
+				fs_dec = true
 		"briefcase intake":
 			itemManager.GrabItem()
 		"item":

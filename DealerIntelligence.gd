@@ -230,7 +230,7 @@ func DealerChoice():
 		if (dealerWantsToUse == "expired medicine"):
 			var medicine_outcome = randf_range(0.0, 1.0)
 			var dying
-			if (medicine_outcome < .4): dying = false
+			if (medicine_outcome < .5): dying = false
 			else: dying = true
 			medicine.dealerDying = dying
 			returning = true

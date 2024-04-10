@@ -34,6 +34,7 @@ var defaultOption_inputmap_controller = {
 @export var button_fullscreen : ButtonClass
 @export var menu : MenuManager
 @export var ui_volume : Label
+@export var checkmark_colorblind : Checkmark
 
 const savePath := "user://buckshotroulette_options_12.shell"
 var data = {}
@@ -44,8 +45,10 @@ var setting_volume = 1
 var setting_windowed = false
 var setting_language = "EN"
 var setting_controllerEnabled = false
+var setting_colorblind = false
 
 func _ready():
+	Printout()
 	LoadSettings()
 	if (!receivedFile):
 		setting_windowed = defaultOption_windowed
@@ -57,6 +60,9 @@ func _ready():
 		ApplySettings_controller()
 		ApplySettings_language()
 		ApplySettings_inputmap()
+
+func Printout():
+	print("user current version: ", GlobalVariables.currentVersion)
 
 func Adjust(alias : String):
 	match(alias):
@@ -89,6 +95,10 @@ func Adjust(alias : String):
 		
 	if (alias != "increase" && alias != "decrease"): menu.ResetButtons()
 
+func ToggleColorblind():
+	setting_colorblind = !setting_colorblind
+	checkmark_colorblind.UpdateCheckmark(setting_colorblind)
+	ApplySettings_colorblind()
 
 func AdjustLanguage(alias : String):
 	setting_language = alias
@@ -177,6 +187,9 @@ func ApplySettings_inputmap():
 func ApplySettings_language():
 	TranslationServer.set_locale(setting_language)
 
+func ApplySettings_colorblind():
+	GlobalVariables.colorblind = setting_colorblind
+
 func SaveSettings():
 	data = {
 		#"has_read_introduction": roundManager.playerData.hasReadIntroduction,
@@ -185,15 +198,20 @@ func SaveSettings():
 		"setting_language" : setting_language,
 		"setting_controllerEnabled" : setting_controllerEnabled,
 		"setting_inputmap_keyboard": setting_inputmap_keyboard,
-		"setting_inputmap_controller": setting_inputmap_controller
+		"setting_inputmap_controller": setting_inputmap_controller,
+		"setting_colorblind": setting_colorblind
 	}
+	print("attempting to save settings")
 	var file = FileAccess.open(savePath, FileAccess.WRITE)
 	file.store_var(data)
 	file.close()
+	print("file closed")
 
 var receivedFile = false
 func LoadSettings():
 	if (FileAccess.file_exists(savePath)):
+		print("settings file found, attempting to load settings: ")
+		print("")
 		var file = FileAccess.open(savePath, FileAccess.READ)
 		data = file.get_var()
 		setting_volume = data.setting_volume
@@ -202,11 +220,20 @@ func LoadSettings():
 		setting_controllerEnabled = data.setting_controllerEnabled
 		setting_inputmap_keyboard = data.setting_inputmap_keyboard
 		setting_inputmap_controller = data.setting_inputmap_controller
+		if (data.has('setting_colorblind')): 
+			setting_colorblind = data.setting_colorblind
+			if (checkmark_colorblind != null): checkmark_colorblind.UpdateCheckmark(setting_colorblind)
 		file.close()
+		print("---------------------------------")
+		print("user settings: ", data)
+		print("---------------------------------")
+		print("settings file closed")
 		setting = true
 		ApplySettings_volume()
 		ApplySettings_window()
 		ApplySettings_language()
 		ApplySettings_controller()
 		ApplySettings_inputmap()
+		ApplySettings_colorblind()
 		receivedFile = true
+	else: print("user does not have settings file")

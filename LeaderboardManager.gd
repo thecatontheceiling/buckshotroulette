@@ -224,7 +224,12 @@ func _on_leaderboard_scores_downloaded(message: String, this_leaderboard_handle:
 	for this_result in result: if (print_cur <= print_max): print("leaderboard result (", print_cur, "/", print_max, ")", this_result); print_cur += 1
 	UpdateDisplay()
 
-
+func val2compressed(val):
+	var accuracy_bits = 17
+	var a = max(0, floor(log(val) / log(2)) + 1 - accuracy_bits)
+	if 2**accuracy_bits * (2**a - 1) > val: a -= 1
+	var b = (val - 2**accuracy_bits * (2**a - 1)) / (2**a)
+	return floor((a * 2**accuracy_bits) + b)
 
 
 
