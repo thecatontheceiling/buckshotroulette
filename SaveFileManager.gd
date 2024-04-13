@@ -9,7 +9,6 @@ var data = {}
 
 func _ready():
 	if (!isMainMenu): LoadGame()
-	pass
 
 func SaveGame():
 	print("attempting to save game")

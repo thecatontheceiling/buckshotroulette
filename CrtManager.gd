@@ -51,8 +51,11 @@ func _unhandled_input(event):
 	if (event.is_action_pressed("ui_right") && viewing):
 		Interaction("right")
 
+func DisableCRT():
+	SetCRT(false)
+	
 func SetCRT(state : bool):
-	if (state):
+	if (state && GlobalVariables.using_steam):
 		bathroom_normal.set_layer_mask_value(1, false)
 		bathroom_broken.visible = true
 		for obj in objarray_normal: obj.visible = false
@@ -80,11 +83,13 @@ func Interaction(alias : String):
 			if (selection_range2 <= board.active_entry_count && window_index == 0):
 				selection_range1 += 12
 				selection_range2 += 12
+				if (window_index == 0): board.DownloadEntries(selection_range1, selection_range2, "top")
 		"left":
 			branch_left.get_parent().get_child(1).Press()
 			if (selection_range1 != 1 && window_index == 0):
 				selection_range1 -= 12
 				selection_range2 -= 12
+				if (window_index == 0): board.DownloadEntries(selection_range1, selection_range2, "top")
 		"window":
 			branch_window.get_parent().get_child(1).Press()
 			CycleWindow()

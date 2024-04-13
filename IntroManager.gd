@@ -90,10 +90,12 @@ func MainBathroomStart():
 	intbranch_bathroomdoor.interactionAllowed = true
 	if (allowingPills): 
 		intbranch_pillbottle.interactionAllowed = true
-		intbranch_crt.interactionAllowed = true
+		if (GlobalVariables.using_steam): intbranch_crt.interactionAllowed = true
 	if (cursor.controller_active): btn_bathroomdoor.grab_focus()
 	controller.previousFocus = btn_bathroomdoor
-	if (allowingPills): btn_pills.visible = true; btn_screen.visible = true
+	if (allowingPills): 
+		btn_pills.visible = true
+		if (GlobalVariables.using_steam): btn_screen.visible = true
 	btn_bathroomdoor.visible = true
 	anim_pillflicker.play("flicker pill")
 
@@ -139,9 +141,10 @@ func RevivalBathroomStart():
 	cursor.SetCursor(true, true)
 	if (allowingPills): 
 		intbranch_pillbottle.interactionAllowed = true
-		intbranch_crt.interactionAllowed = true
+		if (GlobalVariables.using_steam):
+			intbranch_crt.interactionAllowed = true
+			btn_screen.visible = true
 		btn_pills.visible = true
-		btn_screen.visible = true
 		anim_pillflicker.play("flicker pill")
 	if (cursor.controller_active): btn_bathroomdoor.grab_focus()
 	controller.previousFocus = btn_bathroomdoor

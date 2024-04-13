@@ -6,6 +6,7 @@ class_name PipelineManager extends Node
 @export var scene : String
 @export var overlay : Control
 
+@export var main_array_lights : Array[Light3D]
 @export var main_array_hide : Array[Node3D]
 @export var main_array_toggle : Array[Node3D]
 @export var main_restroom : Node3D
@@ -40,5 +41,6 @@ func AdjustSettings(scene : String):
 				await get_tree().create_timer(.1, false).timeout
 				for i in main_array_toggle: i.visible = true
 				main_light_tabletop2.light_energy = -3.54
+				for i in main_array_lights: i.light_energy /= 2
 			"heaven":
 				env.environment.background_color = Color(1, 1, 1)

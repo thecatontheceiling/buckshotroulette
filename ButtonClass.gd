@@ -17,9 +17,13 @@ class_name ButtonClass extends Node
 @export var ui_opacity_inactive : float = 1
 @export var ui_opacity_active : float = .78
 @export var resetting : bool
+@export var adding_cursor : bool
+@export var t : Label
 var mainActive = true
+var orig
 
 func _ready():
+	if (adding_cursor): orig = t.text
 	ui_control = get_parent()
 	get_parent().connect("focus_entered", OnHover)
 	get_parent().connect("focus_exited", OnExit)
@@ -42,12 +46,14 @@ func OnHover():
 			speaker_hover.play()
 			ui.modulate.a = ui_opacity_active
 		cursor.SetCursorImage("hover")
+		if (adding_cursor): t.text = "<  " + tr(orig) + "  >"
 
 func OnExit():
 	if (isActive && mainActive):
 		if (isDynamic):
 			ui.modulate.a = ui_opacity_inactive
 		cursor.SetCursorImage("point")
+		if (adding_cursor): t.text = tr(orig)
 
 signal is_pressed
 func OnPress():

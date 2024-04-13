@@ -49,6 +49,7 @@ func _ready():
 	buttons_options[4].connect("is_pressed", ControllerEnable)
 	buttons_options[5].connect("is_pressed", ControllerDisable)
 	buttons_options[6].connect("is_pressed", ToggleColorblind)
+	buttons_options[7].connect("is_pressed", ToggleMusic)
 	
 	version.text = GlobalVariables.currentVersion
 	
@@ -177,6 +178,8 @@ func ResetControls():
 	optionmanager.ResetControls()
 	ResetButtons()
 
+func ToggleMusic():
+	optionmanager.AdjustSettings_music()
 func ToggleColorblind():
 	optionmanager.ToggleColorblind()
 func DiscordLink():

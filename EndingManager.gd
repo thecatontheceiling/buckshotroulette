@@ -171,7 +171,7 @@ func FinalScore():
 	label_array[4].text = text_beerDrank
 	label_array[5].text = text_totalcash
 	IncrementGlobalStats()
-	if endless_overwriting: board.UploadScore(roundManager.double_or_nothing_rounds_beat, roundManager.double_or_nothing_score, roundManager.double_or_nothing_initial_score)
+	if endless_overwriting && GlobalVariables.using_steam: board.UploadScore(roundManager.double_or_nothing_rounds_beat, roundManager.double_or_nothing_score, roundManager.double_or_nothing_initial_score)
 
 var playerdata = {}
 

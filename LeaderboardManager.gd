@@ -19,6 +19,7 @@ var active_entry_count = 0
 func _ready():
 	display_instances_act = display_instances
 	ClearDisplay()
+	if !GlobalVariables.using_steam: return
 	Steam.leaderboard_find_result.connect(_on_leaderboard_find_result)
 	Steam.leaderboard_score_uploaded.connect(_on_leaderboard_score_uploaded)
 	Steam.leaderboard_scores_downloaded.connect(_on_leaderboard_scores_downloaded)
@@ -167,10 +168,17 @@ func UpdateStats():
 func GetLeaderboard():
 	Steam.findLeaderboard("double_or_nothing")
 
+func UploadScore_Deprecated(rounds_beat, visible_score, initial_score):
+	var ar = PackedInt32Array([initial_score, rounds_beat])
+	var upload = initial_score * rounds_beat
+	Steam.uploadLeaderboardScore(upload, true, ar, leaderboard_handle)
+
 func UploadScore(rounds_beat, visible_score, initial_score):
 	var ar = PackedInt32Array([initial_score, rounds_beat])
-	var score_to_upload = initial_score * rounds_beat 
-	Steam.uploadLeaderboardScore(score_to_upload, true, ar, leaderboard_handle)
+	var upload = initial_score
+	for s in range(rounds_beat - 1): upload *= 2
+	upload = val2compressed(upload)
+	Steam.uploadLeaderboardScore(upload, true, ar, leaderboard_handle)
 
 func _on_leaderboard_score_uploaded(success: int, this_handle: int, this_score: Dictionary) -> void:
 	if success == 1: 
@@ -188,6 +196,7 @@ func _on_leaderboard_find_result(handle: int, found: int) -> void:
 var checking_friends = false
 var checking_overview = false
 func DownloadEntries(range1 : int, range2 : int, alias : String):
+	if !GlobalVariables.using_steam: return
 	match alias:
 		"top":
 			checking_friends = false
@@ -221,7 +230,7 @@ func _on_leaderboard_scores_downloaded(message: String, this_leaderboard_handle:
 	active_result_array = result
 	active_entry_count = Steam.getLeaderboardEntryCount(leaderboard_handle)
 	
-	for this_result in result: if (print_cur <= print_max): print("leaderboard result (", print_cur, "/", print_max, ")", this_result); print_cur += 1
+	for this_result in result: if (print_cur <= print_max): print("leaderboard result (", print_cur, "/", print_max, ")", this_result, Steam.getFriendPersonaName(this_result.steam_id)); print_cur += 1
 	UpdateDisplay()
 
 func val2compressed(val):

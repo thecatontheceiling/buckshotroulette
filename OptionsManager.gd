@@ -46,6 +46,7 @@ var setting_windowed = false
 var setting_language = "EN"
 var setting_controllerEnabled = false
 var setting_colorblind = false
+var setting_music_enabled = true
 
 func _ready():
 	Printout()
@@ -63,6 +64,7 @@ func _ready():
 
 func Printout():
 	print("user current version: ", GlobalVariables.currentVersion)
+	print("user current  hotfix: ", GlobalVariables.currentVersion_hotfix)
 
 func Adjust(alias : String):
 	match(alias):
@@ -110,6 +112,19 @@ func ApplySettings_volume():
 	AudioServer.set_bus_volume_db(0, linear_to_db(setting_volume))
 	UpdateDisplay()
 	pass
+
+func AdjustSettings_music():
+	setting_music_enabled = !setting_music_enabled
+	ApplySettings_music()
+
+@export var anim_vinyl : AnimationPlayer
+func ApplySettings_music():
+	if (setting_music_enabled): anim_vinyl.speed_scale = 1
+	else: anim_vinyl.speed_scale = 0
+	AudioServer.set_bus_mute(1, !setting_music_enabled)
+	AudioServer.set_bus_mute(2, !setting_music_enabled)
+	AudioServer.get_property_list()
+	GlobalVariables.music_enabled = setting_music_enabled
 
 func UpdateDisplay():
 	ui_volume.text = str(snapped(setting_volume * 100, .01)) + "%"
@@ -199,7 +214,8 @@ func SaveSettings():
 		"setting_controllerEnabled" : setting_controllerEnabled,
 		"setting_inputmap_keyboard": setting_inputmap_keyboard,
 		"setting_inputmap_controller": setting_inputmap_controller,
-		"setting_colorblind": setting_colorblind
+		"setting_colorblind": setting_colorblind,
+		"setting_music_enabled": setting_music_enabled
 	}
 	print("attempting to save settings")
 	var file = FileAccess.open(savePath, FileAccess.WRITE)
@@ -223,12 +239,15 @@ func LoadSettings():
 		if (data.has('setting_colorblind')): 
 			setting_colorblind = data.setting_colorblind
 			if (checkmark_colorblind != null): checkmark_colorblind.UpdateCheckmark(setting_colorblind)
+		if (data.has('setting_music_enabled')):
+			setting_music_enabled = data.setting_music_enabled
 		file.close()
 		print("---------------------------------")
 		print("user settings: ", data)
 		print("---------------------------------")
 		print("settings file closed")
 		setting = true
+		ApplySettings_music()
 		ApplySettings_volume()
 		ApplySettings_window()
 		ApplySettings_language()

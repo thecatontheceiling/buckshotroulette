@@ -14,5 +14,6 @@ func Prevent():
 		if (loc == "ES" or loc == "JA"): self.get_parent().visible = false
 		if (loc == "JA"): text_dealer.scale = Vector3(1.409, 2.466, 1.752)
 	else:
-		if (loc == "DE" or loc == "ES" or loc == "ES LATAM" or loc == "BR" or loc == "PT" or loc == "PL" or loc == "TR"): self.get_parent().text = "<                    >"
-		else: self.get_parent().text = "<          >"
+		#if (loc == "DE" or loc == "ES" or loc == "ES LATAM" or loc == "BR" or loc == "PT" or loc == "PL" or loc == "TR"): self.get_parent().text = "<                    >"
+		#else: self.get_parent().text = "<          >"
+		self.get_parent().text = ""
