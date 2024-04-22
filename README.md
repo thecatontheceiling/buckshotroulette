@@ -1,1 +1,1 @@
-god i love huffing gasoline
+full decompilation of buckshot roulettes source code including dealer AI logic 
