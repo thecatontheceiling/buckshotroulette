@@ -1,4 +1,4 @@
-full decompilation of Buckshot Roulette's source code.
+Full decompilation of Buckshot Roulette's source code.
 All of the Dealer AI code (afaik) is in DealerIntelligence.gd
 
 
