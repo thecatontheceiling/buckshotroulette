@@ -12,7 +12,7 @@ func SendDialogue():
 	var fulldia = ""
 	if (len != 1):
 		randindex = randi_range(1, len - 1)
-		if(randindex == 8): randindex -= 1
+		if(randindex == 8 or randindex == 7): randindex -= 1
 		if (sequence[randindex] == "blank"): secondpart = tr("BLANKROUND") % ""
 		else: secondpart = tr("LIVEROUND") % ""
 		match (randindex):
@@ -27,8 +27,6 @@ func SendDialogue():
 			5:
 				firstpart = tr("SEQUENCE6")
 			6:
-				firstpart = tr("SEQUENCE7")
-			7:
 				firstpart = tr("SEQUENCE7")
 		fulldia = tr(firstpart) + "\n" + "... " + tr(secondpart)
 	else: fulldia = tr("UNFORTUNATE")

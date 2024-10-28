@@ -17,6 +17,7 @@ class_name ButtonClass extends Node
 @export var ui_opacity_inactive : float = 1
 @export var ui_opacity_active : float = .78
 @export var resetting : bool
+@export var pipe : LobbyManager
 @export var adding_cursor : bool
 @export var t : Label
 var mainActive = true
@@ -62,4 +63,5 @@ func OnPress():
 		if (isDynamic && playing): speaker_press.play()
 		if (rebind != null): rebindManager.GetRebind(rebind)
 		if (language): options.AdjustLanguage(alias)
+		if (pipe != null): pipe.Pipe(alias)
 		emit_signal("is_pressed")

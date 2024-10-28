@@ -42,24 +42,21 @@ func _input(event):
 		if(event is InputEventJoypadButton):
 			cursor.controller_active = true
 			SetPrevFocus(true)
-			if (printing): print("JOYPAD BUTTON")
 			cursor.SetCursor(cursor.cursor_visible, false)
 		elif(event is InputEventKey):
 			if (!IsEventAssignedToNavigation(event)): return
 			cursor.controller_active = true
 			SetPrevFocus(true)
-			if (printing):print("EVENT KEY")
 			cursor.SetCursor(cursor.cursor_visible, false)
 		#DISABLE CONTROLLER
-		elif(event is InputEventMouse):
+		elif(event is InputEventMouseMotion):
+			if event.velocity == Vector2(0, 0): return
 			cursor.controller_active = false
 			SetPrevFocus(false)
-			if (printing):print("EVENT MOUSE")
 			cursor.SetCursor(cursor.cursor_visible, false)
 		elif(event is InputEventMouseButton):
 			cursor.controller_active = false
 			SetPrevFocus(false)
-			if (printing):print("EVENT MOUSE BUTTON")
 			cursor.SetCursor(cursor.cursor_visible, false)
 
 var navigationBinds = ["ui_up", "ui_down", "ui_left", "ui_right"]

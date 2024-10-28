@@ -151,13 +151,14 @@ func FinalScore():
 	if (endless_overwriting): total_cash = endless_score
 	cash_gl = total_cash
 	
+	var dots = "................................................................"
 	var text_congratulations = tr("CONGRATULATIONS") % [playername]
-	var text_shotsFired = tr("SHOTS FIRED") + " " + str(shots_fired)
-	if (endless_overwriting): text_shotsFired = tr("ROUNDS BEAT") + " " + str(endless_roundsbeat)
-	var text_shellsEjected = tr("SHELLS EJECTED") + " " + str(shells_ejected)
-	var text_doorsKicked = tr("DOORS KICKED") + " " + str(doors_kicked)
-	var text_cigSmoked = tr("CIGS SMOKED") + " " + str(cigarettes_smoked)
-	var text_beerDrank = tr("ML DRANK") + " " + str(ml_of_beer_drank)
+	var text_shotsFired = tr("SHOTS FIRED") + " " + dots; label_array[0].get_child(2).text = str(shots_fired)
+	if (endless_overwriting): text_shotsFired = tr("ROUNDS BEAT") + " " + dots; label_array[0].get_child(2).text = str(shots_fired)
+	var text_shellsEjected = tr("SHELLS EJECTED") + " " + dots; label_array[1].get_child(2).text = str(shots_fired)
+	var text_doorsKicked = tr("DOORS KICKED") + " " + dots; label_array[2].get_child(2).text = str(shots_fired)
+	var text_cigSmoked = tr("CIGS SMOKED") + " " + dots; label_array[3].get_child(2).text = str(shots_fired)
+	var text_beerDrank = tr("ML DRANK") + " " + dots; label_array[4].get_child(2).text = str(shots_fired)
 	var text_totalcash = tr("TOTAL CASH") + " " + str(total_cash) + " $"
 	
 	#if (endless_overwriting): text_shotsFired = "rounds beat ........ " + str(endless_roundsbeat)

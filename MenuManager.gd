@@ -23,6 +23,8 @@ class_name MenuManager extends Node
 @export var anim_creds : AnimationPlayer
 @export var version : Label
 
+var viewing_intro : bool
+
 func _ready():
 	Show("main")
 	buttons[0].connect("is_pressed", Start)
@@ -41,6 +43,7 @@ func _ready():
 	buttons[17].connect("is_pressed", ReturnToLastScreen)
 	buttons[18].connect("is_pressed", ResetControls)
 	buttons[19].connect("is_pressed", DiscordLink)
+	buttons[22].connect("is_pressed", StartMultiplayer)
 	
 	buttons_options[0].connect("is_pressed", IncreaseVol)
 	buttons_options[1].connect("is_pressed", DecreaseVol)
@@ -55,19 +58,49 @@ func _ready():
 	
 	Intro()
 
+func _process(delta):
+	T()
+
+func CheckCommandLine():
+	var arguments = OS.get_cmdline_args()
+	for argument in arguments:
+		if (arguments.size() > 0):
+			#if (GlobalSteam.LOBBY_INVITE_ARG):
+			#	join_lobby(int(argument))
+			pass
+	
+		if argument == "+connect_lobby":
+			GlobalSteam.LOBBY_INVITE_ARG = true
+
 var failsafed = true
+var fs2 = false
 func _input(event):
 	if (event.is_action_pressed("ui_cancel") && failsafed):
 		if (currentScreen != "main"): ReturnToLastScreen()
 	if (event.is_action_pressed("exit game") && failsafed):
 		if (currentScreen != "main"): ReturnToLastScreen()
+	if (event.is_action_pressed("exit game") && !fs2 && viewing_intro):
+		SkipIntro()
+		fs2 = true
 
 func Intro():
 	cursor.SetCursor(false, false)
-	await get_tree().create_timer(.5, false).timeout
+	if GlobalVariables.lobby_id_found_in_command_line != 0 && !GlobalVariables.command_line_checked:
+		print("lobby id found in command line. dont run the menu intro")
+		return
+	viewing_intro = true
 	speaker_music.play()
 	animator_intro.play("splash screen")
-	await get_tree().create_timer(9, false).timeout
+	c = true
+
+func SkipIntro():
+	c = false
+	animator_intro.stop()
+	animator_intro.play("skip intro")
+	FinishIntro()
+
+func FinishIntro():
+	viewing_intro = false
 	mouseblocker.visible = false
 	cursor.SetCursor(true, false)
 	controller.settingFilter = true
@@ -75,6 +108,15 @@ func Intro():
 	if (cursor.controller_active): firstFocus_main.grab_focus()
 	controller.previousFocus = firstFocus_main
 	assigningFocus = true
+
+var t = 0
+var c = false
+var fs = false
+func T():
+	if c: t+= get_process_delta_time()
+	if t > 9 && !fs:
+		FinishIntro()
+		fs = true
 
 func Buttons(state : bool):
 	if (!state):
@@ -134,6 +176,7 @@ func Show(what : String):
 
 func ReturnToLastScreen():
 	print("return to last screen")
+	if currentScreen == "credits": anim_creds.play("RESET")
 	if (currentScreen) == "sub options": lastScreen = "main"
 	if (currentScreen) == "rebind controls": lastScreen = "sub options"
 	if (currentScreen == "audio video" or currentScreen == "language" or currentScreen == "controller" or currentScreen == "rebind controls"): optionmanager.SaveSettings()
@@ -161,6 +204,22 @@ func Start():
 	print("changing scene to: main")
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
+func StartMultiplayer():
+	Buttons(false)
+	ResetButtons()
+	for screen in screens: screen.visible = false
+	title.visible = false
+	controller.previousFocus = null
+	speaker_music.stop()
+	animator_intro.play("snap")
+	for w in waterfalls: w.pause()
+	speaker_start.play()
+	cursor.SetCursor(false, false)
+	savefile.ClearSave()
+	await get_tree().create_timer(4, false).timeout
+	print("changing scene to: lobby")
+	get_tree().change_scene_to_file("res://multiplayer/scenes/mp_lobby.tscn")
+
 func Credits():
 	Show("credits")
 	ResetButtons()
@@ -174,6 +233,13 @@ func Exit():
 	await get_tree().create_timer(.5, false).timeout
 	get_tree().quit()
 
+func DisableMenu():
+	Buttons(false)
+	ResetButtons()
+	speaker_music.stop()
+	animator_intro.play("snap2")
+	cursor.SetCursor(false, false)
+
 func ResetControls():
 	optionmanager.ResetControls()
 	ResetButtons()
@@ -183,7 +249,7 @@ func ToggleMusic():
 func ToggleColorblind():
 	optionmanager.ToggleColorblind()
 func DiscordLink():
-	OS.shell_open("https://discord.gg/cr-channel-1158444754325999747")
+	OS.shell_open(GlobalVariables.discord_link)
 func RebindControls():
 	Show("rebind controls")
 	ResetButtons()
