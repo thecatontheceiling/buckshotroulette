@@ -1,14 +1,12 @@
 extends Node
 
-var currentVersion_nr = "v1.9.905"
-var currentVersion_hotfix = 3
+var currentVersion_nr = "v1.9.903"
+var currentVersion_hotfix = 1
 var using_steam = true
 
 var currentVersion = ""
 var versuffix_steam = " (STEAM)"
 var versuffix_itch = " (ITCH.IO)"
-
-var discord_link = "https://discord.gg/UdjMNaKkQe"
 
 var using_gl = false
 var controllerEnabled = false
@@ -39,8 +37,6 @@ var skipping_intro = false #whether or not to skip the intro
 var lobby_id_found_in_command_line = 0 #lobby ID for when a player joins through an invite with the game closed
 var running_short_intro_in_lobby_scene : bool = false #if the user is entering the lobby scene from mp main, or has a command line lobby ID, skip the bootup animation
 var command_line_checked = false #whether or not the command line has been checked on running the game.
-var version_to_check : String = "" #full version string that includes major, minor, patch, hotfix
-var steam_id_version_checked_array : Array[int] #array of steam IDs that have the version checked. this must match the steam lobby member array IDs.
 
 func _ready():
 	if using_steam: currentVersion = currentVersion_nr + versuffix_steam
@@ -48,8 +44,7 @@ func _ready():
 	debug_round_index_to_end_game_at = 2
 	original_volume_linear_interaction = db_to_linear(AudioServer.get_bus_volume_db(3))
 	original_volume_linear_music = db_to_linear(AudioServer.get_bus_volume_db(1))
-	version_to_check = currentVersion_nr + "." + str(currentVersion_hotfix)
-	print("running full version name: ", version_to_check)
+	print("running version: ", currentVersion_nr, " with hotfix: ", str(currentVersion_hotfix))
 
 func _unhandled_input(event):
 	if GlobalVariables.mp_debugging:
@@ -69,9 +64,8 @@ func _unhandled_input(event):
 var language_array = ["EN", "EE", "RU", "ES LATAM", "ES", "FR", "IT", "JA", "KO", "PL", "PT", "DE", "TR", "UA", "ZHS", "ZHT"]
 var index = 0
 func SwapLanguage(dir : bool):
-	return
 	if dir:
-		if index == language_array.size() - 1:
+		if index == language_array.size() - 1: 
 			index = 0
 		else:
 			index += 1

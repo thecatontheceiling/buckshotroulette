@@ -120,9 +120,8 @@ func AdjustSettings_music():
 func ApplySettings_music():
 	if (setting_music_enabled): anim_vinyl.speed_scale = 1
 	else: anim_vinyl.speed_scale = 0
-	AudioServer.set_bus_mute(1, !setting_music_enabled) #music
-	AudioServer.set_bus_mute(2, !setting_music_enabled) #music secondary
-	AudioServer.set_bus_mute(4, !setting_music_enabled) #music resolve
+	AudioServer.set_bus_mute(1, !setting_music_enabled)
+	AudioServer.set_bus_mute(2, !setting_music_enabled)
 	AudioServer.get_property_list()
 	GlobalVariables.music_enabled = setting_music_enabled
 

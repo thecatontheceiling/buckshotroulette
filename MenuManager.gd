@@ -60,6 +60,7 @@ func _ready():
 
 func _process(delta):
 	T()
+	CheckCommandLine()
 
 func CheckCommandLine():
 	var arguments = OS.get_cmdline_args()
@@ -176,7 +177,6 @@ func Show(what : String):
 
 func ReturnToLastScreen():
 	print("return to last screen")
-	if currentScreen == "credits": anim_creds.play("RESET")
 	if (currentScreen) == "sub options": lastScreen = "main"
 	if (currentScreen) == "rebind controls": lastScreen = "sub options"
 	if (currentScreen == "audio video" or currentScreen == "language" or currentScreen == "controller" or currentScreen == "rebind controls"): optionmanager.SaveSettings()
@@ -249,7 +249,7 @@ func ToggleMusic():
 func ToggleColorblind():
 	optionmanager.ToggleColorblind()
 func DiscordLink():
-	OS.shell_open(GlobalVariables.discord_link)
+	OS.shell_open("https://discord.gg/UdjMNaKkQe")
 func RebindControls():
 	Show("rebind controls")
 	ResetButtons()
