@@ -49,7 +49,6 @@ var setting_colorblind = false
 var setting_music_enabled = true
 
 func _ready():
-	print("your version %s does not match this %s version" % [900, 400])
 	LoadSettings()
 	if (!receivedFile):
 		setting_windowed = defaultOption_windowed
@@ -120,8 +119,9 @@ func AdjustSettings_music():
 func ApplySettings_music():
 	if (setting_music_enabled): anim_vinyl.speed_scale = 1
 	else: anim_vinyl.speed_scale = 0
-	AudioServer.set_bus_mute(1, !setting_music_enabled)
-	AudioServer.set_bus_mute(2, !setting_music_enabled)
+	AudioServer.set_bus_mute(1, !setting_music_enabled) #music
+	AudioServer.set_bus_mute(2, !setting_music_enabled) #music secondary
+	AudioServer.set_bus_mute(4, !setting_music_enabled) #music resolve
 	AudioServer.get_property_list()
 	GlobalVariables.music_enabled = setting_music_enabled
 
