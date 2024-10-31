@@ -205,6 +205,11 @@ func Start():
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 func StartMultiplayer():
+	if !GlobalSteam.ONLINE:
+		GlobalVariables.message_to_forward = tr("MP_UI LOBBY NO CONNECTION")
+		GlobalVariables.returning_to_main_menu_on_popup_close = true
+		GlobalVariables.running_short_intro_in_lobby_scene = true
+	
 	Buttons(false)
 	ResetButtons()
 	for screen in screens: screen.visible = false

@@ -1,7 +1,7 @@
 extends Node
 
-var currentVersion_nr = "v1.9.906"
-var currentVersion_hotfix = 3
+var currentVersion_nr = "v2.0.0"
+var currentVersion_hotfix = 2
 var using_steam = true
 
 var currentVersion = ""
@@ -38,9 +38,10 @@ var timeouts_enabled = false #whether or not timeouts are enabled for adrenaline
 var skipping_intro = false #whether or not to skip the intro
 var lobby_id_found_in_command_line = 0 #lobby ID for when a player joins through an invite with the game closed
 var running_short_intro_in_lobby_scene : bool = false #if the user is entering the lobby scene from mp main, or has a command line lobby ID, skip the bootup animation
-var command_line_checked = false #whether or not the command line has been checked on running the game.
+var command_line_checked = false #whether or not the command line has been checked on running the game
 var version_to_check : String = "" #full version string that includes major, minor, patch, hotfix
-var steam_id_version_checked_array : Array[int] #array of steam IDs that have the version checked. this must match the steam lobby member array IDs.
+var steam_id_version_checked_array : Array[int] #array of steam IDs that have the version checked. this must match the steam lobby member array IDs
+var returning_to_main_menu_on_popup_close : bool #whether or not closing the popup window will return the user to the main menu
 
 func _ready():
 	if using_steam: currentVersion = currentVersion_nr + versuffix_steam

@@ -22,6 +22,7 @@ func _ready():
 	ONLINE = Steam.loggedOn()
 	STEAM_ID = Steam.getSteamID()
 	STEAM_NAME = Steam.getPersonaName()
+	if GlobalVariables.mp_debugging: STEAM_ID = 1234
 	print("online ... ", ONLINE, " ... steam id ... ", STEAM_ID, " ... steam name ... ", STEAM_NAME)
 
 func _process(_delta: float) -> void:

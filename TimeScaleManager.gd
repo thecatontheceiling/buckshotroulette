@@ -25,3 +25,12 @@ func LerpTimeScale():
 		c = ease(c, 0.4)
 		var val = lerpf(from, to, c)
 		Engine.time_scale = val
+
+func _unhandled_input(event):
+	if GlobalVariables.mp_debugging:
+		if event.is_action_pressed("-"):
+			moving = false
+		if event.is_action_pressed(","):
+			moving = false
+		if event.is_action_pressed("."):
+			moving = false
