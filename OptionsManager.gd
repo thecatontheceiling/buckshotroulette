@@ -13,7 +13,8 @@ var defaultOption_inputmap_keyboard = {
 	"ui_up": InputMap.action_get_events("ui_up")[0],
 	"ui_down": InputMap.action_get_events("ui_down")[0],
 	"reset": InputMap.action_get_events("reset")[0],
-	"exit game": InputMap.action_get_events("exit game")[0]
+	"exit game": InputMap.action_get_events("exit game")[0],
+	"free look toggle": InputMap.action_get_events("free look toggle")[0],
 }
 var defaultOption_inputmap_controller = {
 	"ui_accept": InputMap.action_get_events("ui_accept")[1],
@@ -23,7 +24,8 @@ var defaultOption_inputmap_controller = {
 	"ui_up": InputMap.action_get_events("ui_up")[1],
 	"ui_down": InputMap.action_get_events("ui_down")[1],
 	"reset": InputMap.action_get_events("reset")[1],
-	"exit game": InputMap.action_get_events("exit game")[1]
+	"exit game": InputMap.action_get_events("exit game")[1],
+	"free look toggle": InputMap.action_get_events("free look toggle")[1],
 }
 
 @export var ui_windowed : CanvasItem
@@ -35,6 +37,7 @@ var defaultOption_inputmap_controller = {
 @export var menu : MenuManager
 @export var ui_volume : Label
 @export var checkmark_colorblind : Checkmark
+@export var checkmark_greyscale : Checkmark
 
 const savePath := "user://buckshotroulette_options_12.shell"
 var data = {}
@@ -46,6 +49,7 @@ var setting_windowed = false
 var setting_language = "EN"
 var setting_controllerEnabled = false
 var setting_colorblind = false
+var setting_greyscale_death = true
 var setting_music_enabled = true
 
 func _ready():
@@ -60,6 +64,7 @@ func _ready():
 		ApplySettings_controller()
 		ApplySettings_language()
 		ApplySettings_inputmap()
+		ApplySettings_greyscaledeath()
 
 func Printout():
 	print("user current version: ", GlobalVariables.currentVersion)
@@ -100,6 +105,11 @@ func ToggleColorblind():
 	setting_colorblind = !setting_colorblind
 	checkmark_colorblind.UpdateCheckmark(setting_colorblind)
 	ApplySettings_colorblind()
+
+func ToggleGreyscaleDeath():
+	setting_greyscale_death = !setting_greyscale_death
+	checkmark_greyscale.UpdateCheckmark(setting_greyscale_death)
+	ApplySettings_greyscaledeath()
 
 func AdjustLanguage(alias : String):
 	setting_language = alias
@@ -164,7 +174,8 @@ func ParseInputMapDictionary():
 		"ui_up": var_to_str(InputMap.action_get_events("ui_up")[0]),
 		"ui_down": var_to_str(InputMap.action_get_events("ui_down")[0]),
 		"reset": var_to_str(InputMap.action_get_events("reset")[0]),
-		"exit game": var_to_str(InputMap.action_get_events("exit game")[0])
+		"exit game": var_to_str(InputMap.action_get_events("exit game")[0]),
+		"free look toggle": var_to_str(InputMap.action_get_events("free look toggle")[0])
 	}
 	setting_inputmap_controller = {
 		"ui_accept": var_to_str(InputMap.action_get_events("ui_accept")[1]),
@@ -174,7 +185,8 @@ func ParseInputMapDictionary():
 		"ui_up": var_to_str(InputMap.action_get_events("ui_up")[1]),
 		"ui_down": var_to_str(InputMap.action_get_events("ui_down")[1]),
 		"reset": var_to_str(InputMap.action_get_events("reset")[1]),
-		"exit game": var_to_str(InputMap.action_get_events("exit game")[1])
+		"exit game": var_to_str(InputMap.action_get_events("exit game")[1]),
+		"free look toggle": var_to_str(InputMap.action_get_events("free look toggle")[1])
 	}
 
 func ResetControls():
@@ -204,6 +216,10 @@ func ApplySettings_language():
 func ApplySettings_colorblind():
 	GlobalVariables.colorblind = setting_colorblind
 
+func ApplySettings_greyscaledeath():
+	GlobalVariables.greyscale_death = setting_greyscale_death
+	checkmark_greyscale.UpdateCheckmark(GlobalVariables.greyscale_death)
+
 func SaveSettings():
 	data = {
 		#"has_read_introduction": roundManager.playerData.hasReadIntroduction,
@@ -214,7 +230,8 @@ func SaveSettings():
 		"setting_inputmap_keyboard": setting_inputmap_keyboard,
 		"setting_inputmap_controller": setting_inputmap_controller,
 		"setting_colorblind": setting_colorblind,
-		"setting_music_enabled": setting_music_enabled
+		"setting_music_enabled": setting_music_enabled,
+		"setting_greyscale_death": setting_greyscale_death,
 	}
 	print("attempting to save settings")
 	var file = FileAccess.open(savePath, FileAccess.WRITE)
@@ -240,6 +257,9 @@ func LoadSettings():
 			if (checkmark_colorblind != null): checkmark_colorblind.UpdateCheckmark(setting_colorblind)
 		if (data.has('setting_music_enabled')):
 			setting_music_enabled = data.setting_music_enabled
+		if (data.has('setting_greyscale_death')):
+			setting_greyscale_death = data.setting_greyscale_death
+			if (checkmark_greyscale != null): checkmark_greyscale.UpdateCheckmark(setting_greyscale_death)
 		file.close()
 		print("---------------------------------")
 		print("user settings: ", data)
@@ -253,5 +273,6 @@ func LoadSettings():
 		ApplySettings_controller()
 		ApplySettings_inputmap()
 		ApplySettings_colorblind()
+		ApplySettings_greyscaledeath()
 		receivedFile = true
 	else: print("user does not have settings file")

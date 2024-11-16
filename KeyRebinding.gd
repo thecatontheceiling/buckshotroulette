@@ -29,6 +29,7 @@ func UpdateBindList():
 				bindkey_keyboard = bindkey_keyboard.trim_suffix("(Physical)")
 				bindkey_keyboard = bindkey_keyboard.replace(" ", "")
 				bindkey_controller = bindkey_controller.left(firstindex)
+				bindkey_controller = bindkey_controller.replace("Joypad Motion on", "")
 				keylabel.text = bindkey_keyboard + ", " + bindkey_controller
 		options.ParseInputMapDictionary()
 

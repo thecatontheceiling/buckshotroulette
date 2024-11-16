@@ -1,7 +1,7 @@
 extends Node
 
-var currentVersion_nr = "v2.0.0"
-var currentVersion_hotfix = 2
+var currentVersion_nr = "v2.1.0"
+var currentVersion_hotfix = 10
 var using_steam = true
 
 var currentVersion = ""
@@ -13,9 +13,14 @@ var discord_link = "https://discord.gg/UdjMNaKkQe"
 var using_gl = false
 var controllerEnabled = false
 var music_enabled = true
+var current_button_hovered_over : Control
 
 var colorblind = false
 var colorblind_color = Color(1, 1, 0)
+var greyscale_death = false
+var looping_input_main = false
+var looping_input_secondary = false
+var cursor_state_after_toggle = false
 
 var default_color_live = Color(1, 0.28, 0.29)
 var default_color_blank = Color(0.29, 0.5, 1)
@@ -42,6 +47,228 @@ var command_line_checked = false #whether or not the command line has been check
 var version_to_check : String = "" #full version string that includes major, minor, patch, hotfix
 var steam_id_version_checked_array : Array[int] #array of steam IDs that have the version checked. this must match the steam lobby member array IDs
 var returning_to_main_menu_on_popup_close : bool #whether or not closing the popup window will return the user to the main menu
+var active_match_customization_dictionary : Dictionary #match customization dictionary that will be used in the game. gets cleared on game end etc
+var stashed_match_customization_dictionary : Dictionary #match customization dictionary that will be stored in the current game session
+var previous_match_customization_differences : Dictionary #previously active match customization differences that were received by the host
+
+var debug_match_customization = {
+	"number_of_rounds": 3,
+	"skipping_intro": false,
+	"round_property_array": [
+		{
+			"round_index": 0,
+			"starting_health": -1,
+			"item_properties": [
+				{
+					"item_id": 1, #handsaw
+					"max_per_player": 2,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 2, #magnifying glass
+					"max_per_player": 2,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 3, #jammer
+					"max_per_player": 1,
+					"max_on_table": 1,
+					"is_ingame": true}, 
+				{
+					"item_id": 4, #cigarettes
+					"max_per_player": 1,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 5, #beer
+					"max_per_player": 8,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 6, #burner phone
+					"max_per_player": 8,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 8, #adrenaline
+					"max_per_player": 4,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 9, #inverter
+					"max_per_player": 4,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 10, #remote
+					"max_per_player": 1,
+					"max_on_table": 2,
+					"is_ingame": true}],
+			"shell_load_properties": [
+				{
+					"sequence_index": 0,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},
+				{
+					"sequence_index": 1,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},
+				{
+					"sequence_index": 2,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},
+				{
+					"sequence_index": 3,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},]},
+		{
+			"round_index": 1,
+			"starting_health": -1,
+			"item_properties": [
+				{
+					"item_id": 1, #handsaw
+					"max_per_player": 2,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 2, #magnifying glass
+					"max_per_player": 2,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 3, #jammer
+					"max_per_player": 1,
+					"max_on_table": 1,
+					"is_ingame": true}, 
+				{
+					"item_id": 4, #cigarettes
+					"max_per_player": 1,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 5, #beer
+					"max_per_player": 8,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 6, #burner phone
+					"max_per_player": 8,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 8, #adrenaline
+					"max_per_player": 4,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 9, #inverter
+					"max_per_player": 4,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 10, #remote
+					"max_per_player": 1,
+					"max_on_table": 2,
+					"is_ingame": true}],
+			"shell_load_properties": [
+				{
+					"sequence_index": 0,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},
+				{
+					"sequence_index": 1,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},
+				{
+					"sequence_index": 2,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},
+				{
+					"sequence_index": 3,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},]
+		},
+		{
+			"round_index": 2,
+			"starting_health": -1,
+			"item_properties": [
+				{
+					"item_id": 1, #handsaw
+					"max_per_player": 2,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 2, #magnifying glass
+					"max_per_player": 2,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 3, #jammer
+					"max_per_player": 1,
+					"max_on_table": 1,
+					"is_ingame": true}, 
+				{
+					"item_id": 4, #cigarettes
+					"max_per_player": 1,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 5, #beer
+					"max_per_player": 8,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 6, #burner phone
+					"max_per_player": 8,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 8, #adrenaline
+					"max_per_player": 4,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 9, #inverter
+					"max_per_player": 4,
+					"max_on_table": 32,
+					"is_ingame": true}, 
+				{
+					"item_id": 10, #remote
+					"max_per_player": 1,
+					"max_on_table": 2,
+					"is_ingame": true}],
+			"shell_load_properties": [
+				{
+					"sequence_index": 0,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},
+				{
+					"sequence_index": 1,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},
+				{
+					"sequence_index": 2,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},
+				{
+					"sequence_index": 3,
+					"number_of_blanks": -1,
+					"number_of_lives": -1,
+					"number_of_items": -1,},]
+		}
+		]
+}
 
 func _ready():
 	if using_steam: currentVersion = currentVersion_nr + versuffix_steam
@@ -51,6 +278,9 @@ func _ready():
 	original_volume_linear_music = db_to_linear(AudioServer.get_bus_volume_db(1))
 	version_to_check = currentVersion_nr + "." + str(currentVersion_hotfix)
 	print("running full version name: ", version_to_check)
+	if GlobalVariables.mp_debugging:
+		TranslationServer.set_locale("EN")
+		active_match_customization_dictionary = debug_match_customization
 
 func _unhandled_input(event):
 	if GlobalVariables.mp_debugging:
@@ -70,7 +300,6 @@ func _unhandled_input(event):
 var language_array = ["EN", "EE", "RU", "ES LATAM", "ES", "FR", "IT", "JA", "KO", "PL", "PT", "DE", "TR", "UA", "ZHS", "ZHT"]
 var index = 0
 func SwapLanguage(dir : bool):
-	return
 	if dir:
 		if index == language_array.size() - 1:
 			index = 0

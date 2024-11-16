@@ -1,3 +1,4 @@
+
 class_name ItemInteraction extends Node
 
 @export var medicine : Medicine
