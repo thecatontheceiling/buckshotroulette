@@ -70,6 +70,7 @@ func BeginLoop():
 func Fly():
 	btn_door.visible = false
 	bracket_door.visible = false
+	bracket_door.global_position = Vector3(0, 0, -100)
 	intbranch_heavendoor.interactionAllowed = false
 	cursor.SetCursor(false, false)
 	animator.play("move")

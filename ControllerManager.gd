@@ -3,6 +3,7 @@ class_name ControllerManager extends Node
 @export var dynamicallySwappingDevice : bool
 @export var buttons : Array[ButtonClass]
 @export var brackets : Array[Control]
+@export var brackets_3d : Array[Node3D]
 @export var cursor : CursorManager
 @export var exitingButtons : bool
 @export var settingVisibility : bool
@@ -94,6 +95,7 @@ func SetPrevFocus(grabbing : bool):
 
 func SetVisibility():
 	for b in brackets: b.visible = cursor.controller_active
+	for b in brackets_3d: b.visible = cursor.controller_active
 
 func ExitButtons():
 	if (exitingButtons):
