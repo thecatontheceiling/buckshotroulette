@@ -14,6 +14,9 @@ var STEAM_NAME = ""
 var ONLINE = false
 var HOST_ID = 0
 
+var is_lobby_friends_only = true
+var lobby_player_limit = 4
+
 func _ready():
 	process_priority = 1000
 	set_process_internal(true)

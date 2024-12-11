@@ -1,7 +1,7 @@
 extends Node
 
-var currentVersion_nr = "v2.1.0"
-var currentVersion_hotfix = 11
+var currentVersion_nr = "v2.2.0"
+var currentVersion_hotfix = 4
 var using_steam = true
 
 var currentVersion = ""
@@ -283,7 +283,7 @@ func _ready():
 		active_match_customization_dictionary = debug_match_customization
 
 func _unhandled_input(event):
-	if GlobalVariables.mp_debugging:
+	if mp_debugging or mp_debug_keys_enabled:
 		if event.is_action_pressed("debug_q"):
 			SwapLanguage(false)
 		if event.is_action_pressed("debug_e"):
