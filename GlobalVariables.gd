@@ -1,7 +1,7 @@
 extends Node
 
 var currentVersion_nr = "v2.2.0"
-var currentVersion_hotfix = 4
+var currentVersion_hotfix = 6
 var using_steam = true
 
 var currentVersion = ""
@@ -312,39 +312,3 @@ func SwapLanguage(dir : bool):
 			index -= 1
 	TranslationServer.set_locale(language_array[index])
 	print("setting locale to: ", language_array[index])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
